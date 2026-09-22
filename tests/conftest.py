@@ -46,8 +46,18 @@ class FakeTransport:
 
     def fetch(self, path, dest, **kw):
         dest.parent.mkdir(parents=True, exist_ok=True)
-        src = REPO_ROOT / "tests/fixtures/23ai/alertlog/alert_excerpt.log"
-        dest.write_text(src.read_text() if path.endswith(".log") else "fetched:" + path)
+        fx = REPO_ROOT / "tests/fixtures/23ai"
+        if path.endswith(".log"):
+            dest.write_text((fx / "alertlog/alert_excerpt.log").read_text())
+        elif "/incident/incdir_" in path:
+            name = "incident_ora7445_b.trc" if "8347" in path else "incident_ora7445.trc"
+            dest.write_text((fx / "traces" / name).read_text())
+        elif "AUTODIAG_NORMAL" in path:
+            dest.write_text((fx / "traces/AUTODIAG_NORMAL.trc").read_text())
+        elif "AUTODIAG_ANOMALY" in path:
+            dest.write_text((fx / "traces/AUTODIAG_ANOMALY.trc").read_text())
+        else:
+            dest.write_text("fetched:" + path)
         return CommandResult(name="cat_file", argv=["cat", path], returncode=0, stdout=str(dest))
 
 

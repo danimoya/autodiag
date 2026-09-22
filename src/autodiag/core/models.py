@@ -76,6 +76,9 @@ class Target(BaseModel):
         default_factory=list,
         description="Additional absolute roots readable over SSH (AHF, OSWatcher)",
     )
+    ips_dest: str = Field(
+        default="/tmp", description="Directory on the nodes for generated IPS zips"
+    )
     redact: bool = True
 
     @field_validator("adr_homes")
@@ -89,7 +92,7 @@ class Target(BaseModel):
     @property
     def allowed_roots(self) -> list[str]:
         roots = [f"{self.adr_base.rstrip('/')}/diag"] if self.adr_base else []
-        return roots + list(self.extra_roots)
+        return roots + list(self.extra_roots) + [self.ips_dest]
 
     def node_for_instance(self, instance: str) -> Node:
         for n in self.nodes:

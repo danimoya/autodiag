@@ -12,6 +12,7 @@ from autodiag.cli import (
     cmds_diff,
     cmds_kb,
     cmds_report,
+    cmds_serve,
     cmds_target,
     cmds_trace,
 )
@@ -30,6 +31,7 @@ app.add_typer(cmds_diff.app, name="diff")
 app.add_typer(cmds_case.app, name="case")
 app.add_typer(cmds_report.app, name="report")
 app.add_typer(cmds_kb.app, name="kb")
+app.add_typer(cmds_serve.app, name="mcp")
 
 
 def _version_callback(value: bool) -> None:

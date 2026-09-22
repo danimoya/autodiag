@@ -20,7 +20,16 @@ def render(
 ) -> None:
     s = common.settings()
     st = common.store(s)
-    ctx = build_context(st, case_id, settings=s, capture_env=capture_env)
+    case = st.get_case(case_id)
+    t = common.target(case.target, s)
+    ctx = build_context(
+        st,
+        case_id,
+        target=t,
+        transport_factory=common.transport_factory(s, t),
+        runner=common.sql_runner(s, t) if capture_env else None,
+        capture_env=capture_env,
+    )
     md = render_report(kind, ctx)
     st.add_report(case_id, kind=kind, markdown=md)
     if out:

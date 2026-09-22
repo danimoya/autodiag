@@ -16,7 +16,7 @@ def test_load_targets_from_yaml(fixtures_dir: Path) -> None:
     assert tb.nodes[0].ssh_target == "autodiag-testbed"
     assert tb.sqlnet is not None and tb.sqlnet.user == "c##autodiag"
     assert tb.adr_homes == ["diag/rdbms/free/FREE"]
-    assert tb.allowed_roots == ["/opt/oracle/diag"]
+    assert tb.allowed_roots == ["/opt/oracle/diag", "/tmp"]
 
 
 def test_node_ssh_target_defaults_to_user_at_host(fixtures_dir: Path) -> None:

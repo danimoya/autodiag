@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from autodiag.case.store import CaseStore
-from autodiag.core.settings import Settings
+from autodiag.core.models import Node, Target
 from autodiag.kb.lookup import kb_lookup
 from autodiag.report.env import capture_environment
 from autodiag.report.render import ReportContext
@@ -17,15 +18,19 @@ from autodiag.trace.registry import parse_trace
 
 
 def build_context(
-    store: CaseStore, case_id: str, *, settings: Settings, capture_env: bool = False
+    store: CaseStore,
+    case_id: str,
+    *,
+    target: Target,
+    transport_factory: Callable[[Node], Any] | None = None,
+    runner: Any | None = None,
+    capture_env: bool = False,
+    stack_notes: list[str] | None = None,
+    profile_summary: str | None = None,
 ) -> ReportContext:
-    from autodiag.cli import common  # local import: the CLI module wires transports/runners
-
     case = store.get_case(case_id)
-    target = common.target(case.target, settings)
     artifacts = store.list_artifacts(case.id)
     incidents: list[dict[str, Any]] = []
-    stack_notes: list[str] = []
     for a in artifacts:
         if a.kind not in {"trace", "incident_trace"}:
             continue
@@ -42,16 +47,13 @@ def build_context(
                     "trace_file": a.origin.get("remote", a.path),
                     "first_app_frame": doc.first_app_frame,
                     "sql_id": doc.sql_id,
+                    "artifact_id": a.id,
                 }
             )
     incidents.sort(key=lambda i: i["create_time"] or datetime.min.replace(tzinfo=UTC), reverse=True)
     env: dict[str, Any] = {}
     if capture_env:
-        env = capture_environment(
-            target,
-            transport_factory=common.transport_factory(settings, target),
-            runner=common.sql_runner(settings, target),
-        )
+        env = capture_environment(target, transport_factory=transport_factory, runner=runner)
     kb_hits: list[dict[str, Any]] = []
     for key in case.problem_keys:
         kb_hits += [
@@ -87,6 +89,7 @@ def build_context(
         artifacts=[a.model_dump() for a in artifacts],
         timeline=timeline,
         kb_hits=kb_hits,
-        stack_notes=stack_notes,
+        stack_notes=stack_notes or [],
+        profile_summary=profile_summary,
         generated_at=datetime.now(UTC).replace(microsecond=0),
     )

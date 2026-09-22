@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 
-_BIND_VALUE = re.compile(r"^(\s*value=).*$", re.MULTILINE)
+_BIND_VALUE = re.compile(r"(^|[\s:])(value=)\S*", re.MULTILINE)
 _STR_LITERAL = re.compile(r"'(?:[^'\\]|\\.|'')*'")
 _IPV4 = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 _EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")
@@ -26,7 +26,7 @@ def redact_for_llm(text: str, *, enabled: bool = True) -> str:
         if _LINE_KEEP.match(line):
             out_lines.append(line)
             continue
-        line = _BIND_VALUE.sub(r"\1<redacted>", line)
+        line = _BIND_VALUE.sub(r"\1\2<redacted>", line)
         line = _STR_LITERAL.sub("'<str>'", line)
         line = _EMAIL.sub("<email>", line)
         line = _IPV4.sub("<ip>", line)
