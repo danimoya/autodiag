@@ -101,20 +101,42 @@ class AdrSource:
         out.sort(key=lambda p: (p.lastinc_time is None, p.lastinc_time), reverse=True)
         return out
 
-    def list_incidents(self, *, problem_key: str, mode: str = "brief") -> list[IncidentRow]:
+    def list_incidents(
+        self, *, problem_id: int | None = None, problem_key: str | None = None, mode: str = "brief"
+    ) -> list[IncidentRow]:
+        """Incidents of one problem. adrci filters incidents by ``problem_id`` only, so a key
+        is first resolved to the matching problem id(s) through ``show problem``."""
+        if problem_id is None and problem_key is None:
+            raise AdrSourceError("problem_id or problem_key is required")
         out: list[IncidentRow] = []
         for ref in self._refs():
-            text = self._run(
-                ref.node,
-                "adrci_show_incident",
-                {"adr_home": ref.adr_home, "problem_key": problem_key, "mode": mode},
+            ids = (
+                [problem_id]
+                if problem_id is not None
+                else self._problem_ids_for_key(ref, problem_key or "")
             )
-            for i in parse_show_incident(text):
-                out.append(
-                    IncidentRow(**i.model_dump(), node=ref.node.host, instance=ref.node.instance)
+            for pid in ids:
+                text = self._run(
+                    ref.node,
+                    "adrci_show_incident",
+                    {"adr_home": ref.adr_home, "problem_id": pid, "mode": mode},
                 )
+                for i in parse_show_incident(text):
+                    out.append(
+                        IncidentRow(
+                            **i.model_dump(), node=ref.node.host, instance=ref.node.instance
+                        )
+                    )
         out.sort(key=lambda i: i.incident_id, reverse=True)
         return out
+
+    def _problem_ids_for_key(self, ref: _Ref, problem_key: str) -> list[int]:
+        text = self._run(
+            ref.node,
+            "adrci_show_problem_by_key",
+            {"adr_home": ref.adr_home, "problem_key": problem_key},
+        )
+        return [p.problem_id for p in parse_show_problem(text)]
 
     def get_incident(self, incident_id: int) -> IncidentRow | None:
         for ref in self._refs():

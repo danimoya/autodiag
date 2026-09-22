@@ -124,13 +124,14 @@ ALLOWLIST: dict[str, CommandSpec] = {
         "Problems with incidents in the last N days",
     ),
     "adrci_show_incident": CommandSpec(
-        _adrci("show incident -mode {mode} -p \"problem_key='{problem_key}'\""),
-        {
-            "adr_home": _v_adr_home,
-            "problem_key": _v_problem_key,
-            "mode": _v_choice("brief", "detail"),
-        },
-        "Incidents of one problem key",
+        _adrci('show incident -mode {mode} -p "problem_id={problem_id}"'),
+        {"adr_home": _v_adr_home, "problem_id": _v_int, "mode": _v_choice("brief", "detail")},
+        "Incidents of one problem (by problem id; adrci does not filter incidents by key)",
+    ),
+    "adrci_show_problem_by_key": CommandSpec(
+        _adrci("show problem -p \"problem_key='{problem_key}'\""),
+        {"adr_home": _v_adr_home, "problem_key": _v_problem_key},
+        "Look up a problem by its key",
     ),
     "adrci_show_incident_by_id": CommandSpec(
         _adrci('show incident -mode {mode} -p "incident_id={incident_id}"'),

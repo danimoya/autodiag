@@ -84,27 +84,28 @@ def test_path_without_roots_is_rejected() -> None:
 
 def test_problem_key_predicate_forbids_quotes() -> None:
     ok = build_command(
-        "adrci_show_incident",
-        {
-            "adr_home": "diag/rdbms/free/FREE",
-            "problem_key": "ORA 600 [autodiag_test]",
-            "mode": "brief",
-        },
+        "adrci_show_problem_by_key",
+        {"adr_home": "diag/rdbms/free/FREE", "problem_key": "ORA 600 [autodiag_test]"},
     )
     assert "problem_key='ORA 600 [autodiag_test]'" in ok[1]
     for bad in ["ORA 600 [x]' or 1=1 --", 'ORA "600"', "ORA;600"]:
         with pytest.raises(AllowlistError):
             build_command(
-                "adrci_show_incident",
-                {"adr_home": "diag/rdbms/free/FREE", "problem_key": bad, "mode": "brief"},
+                "adrci_show_problem_by_key",
+                {"adr_home": "diag/rdbms/free/FREE", "problem_key": bad},
             )
+    incidents = build_command(
+        "adrci_show_incident",
+        {"adr_home": "diag/rdbms/free/FREE", "problem_id": 3, "mode": "brief"},
+    )
+    assert "problem_id=3" in incidents[1]
 
 
 def test_choice_parameter() -> None:
     with pytest.raises(AllowlistError, match="one of"):
         build_command(
             "adrci_show_incident",
-            {"adr_home": "diag/rdbms/free/FREE", "problem_key": "ORA 600 [x]", "mode": "verbose"},
+            {"adr_home": "diag/rdbms/free/FREE", "problem_id": 1, "mode": "verbose"},
         )
 
 

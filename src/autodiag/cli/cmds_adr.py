@@ -38,11 +38,15 @@ def problems(
 @app.command("incidents")
 def incidents(
     target: str = typer.Option(..., "--target", "-t"),
-    problem_key: str = typer.Option(..., "--problem-key", "-k"),
+    problem_key: str = typer.Option(None, "--problem-key", "-k"),
+    problem_id: int = typer.Option(None, "--problem-id", "-p"),
     as_json: bool = typer.Option(False, "--json"),
 ) -> None:
+    if problem_key is None and problem_id is None:
+        typer.echo("give --problem-id or --problem-key", err=True)
+        raise typer.Exit(code=1)
     src = common.source(common.target(target))
-    rows = src.list_incidents(problem_key=problem_key)
+    rows = src.list_incidents(problem_id=problem_id, problem_key=problem_key)
     common.emit(
         {"incidents": [i.model_dump() for i in rows]},
         as_json=as_json,

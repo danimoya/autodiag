@@ -24,6 +24,7 @@ class FakeTransport:
     FILES = {
         "adrci_show_homes": "show_homes.txt",
         "adrci_show_problem": "show_problem.txt",
+        "adrci_show_problem_by_key": "show_problem.txt",
         "adrci_show_incident": "show_incident_brief.txt",
         "adrci_show_incident_by_id": "show_incident_detail.txt",
     }

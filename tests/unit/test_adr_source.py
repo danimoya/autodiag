@@ -35,9 +35,17 @@ def test_list_problems(source: AdrSource) -> None:
     assert t.calls[-1][1] == {"adr_home": "diag/rdbms/free/FREE", "days": 7}
 
 
-def test_list_incidents_for_problem_key(source: AdrSource) -> None:
-    incs = source.list_incidents(problem_key="ORA 600 [autodiag_test]")
+def test_list_incidents_by_id_and_by_key(source: AdrSource) -> None:
+    incs = source.list_incidents(problem_id=1)
     assert [i.incident_id for i in incs] == [8881, 8880, 8873]
+    t = source.transport_for(source.target.nodes[0])
+    assert t.calls[-1] == (
+        "adrci_show_incident",
+        {"adr_home": "diag/rdbms/free/FREE", "problem_id": 1, "mode": "brief"},
+    )
+    by_key = source.list_incidents(problem_key="ORA 600 [autodiag_test]")
+    assert by_key  # resolved through show problem (the fake returns 3 problems -> 3 lookups)
+    assert t.calls[-4][0] == "adrci_show_problem_by_key"
 
 
 def test_get_incident_detail(source: AdrSource) -> None:
