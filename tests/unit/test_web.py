@@ -77,9 +77,9 @@ def test_case_flow_and_trace_viewer(client: TestClient) -> None:
         follow_redirects=False,
     )
     assert r.status_code == 303
-    ev_id = next(
-        part for part in client.get(case_url).text.split() if part.startswith("ev_")
-    ).strip("<>,.")
+    import re
+
+    ev_id = re.search(r"ev_[0-9a-f]{10}", client.get(case_url).text).group(0)
     r = client.post(
         f"/cases/{cid}/findings",
         data={
