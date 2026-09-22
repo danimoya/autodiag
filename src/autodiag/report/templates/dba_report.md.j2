@@ -1,0 +1,87 @@
+# AutoDiag report: {{ case.title }}
+
+Case `{{ case.id }}` on target **{{ target.name }}** ({{ target.platform }}, {{ target.kind }}, Oracle {{ target.oracle_version or environment.version_full or '-' }}), generated {{ generated_at | ts }}.
+Problem keys: {% if case.problem_keys %}{{ case.problem_keys | join(', ') }}{% else %}-{% endif %}
+
+## Summary
+{% set root = findings | selectattr('kind', 'equalto', 'root_cause') | list %}
+{% if root %}
+{% for f in root %}
+- **{{ f.title }}** (confidence {{ f.confidence | pct }}, {{ f.status }}): {{ f.detail }}
+{% endfor %}
+{% else %}
+No root cause recorded yet. {{ findings | length }} finding(s) below.
+{% endif %}
+{% if profile_summary %}
+SQL trace comparison: {{ profile_summary }}
+{% endif %}
+{% for n in stack_notes %}
+- Call stacks: {{ n }}
+{% endfor %}
+
+## Evidence
+{% for e in evidence %}
+- `{{ e.id }}` {{ e.tool }}{% if e.artifact_id %} on `{{ e.artifact_id }}`{% endif %}{% if e.line_from %} lines {{ e.line_from }}-{{ e.line_to }}{% endif %}: {{ e.summary }}
+{% else %}
+- (no evidence recorded)
+{% endfor %}
+
+## Incidents
+{% for i in incidents %}
+- {{ i.create_time | ts }} incident {{ i.incident_id }} `{{ i.problem_key }}`{% if i.first_app_frame %}, first application frame `{{ i.first_app_frame }}`{% endif %}{% if i.sql_id %}, sql_id {{ i.sql_id }}{% endif %}{% if i.trace_file %} ({{ i.trace_file }}){% endif %}
+{% else %}
+- (none)
+{% endfor %}
+
+## Likely cause
+{% for f in findings if f.kind in ['root_cause', 'contributing'] %}
+- [{{ f.kind }}] {{ f.title }} ({{ f.confidence | pct }}): {{ f.detail }} — evidence {{ f.evidence_ids | join(', ') }}
+{% else %}
+- Not established. Open questions are listed below.
+{% endfor %}
+{% for h in kb_hits %}
+- Knowledge base [{{ h.kind }}] {{ h.title }}{% if h.mos_search %} — search My Oracle Support for "{{ h.mos_search }}"{% endif %}
+{% endfor %}
+
+## Suggested actions
+{% for f in findings if f.kind == 'action' %}
+- {{ f.title }}: {{ f.detail }}
+{% endfor %}
+{% for h in kb_hits %}
+{% for a in h.actions %}
+- {{ a }}
+{% endfor %}
+{% endfor %}
+
+## Open questions
+{% for f in findings if f.kind == 'observation' %}
+- {{ f.title }}: {{ f.detail }}
+{% endfor %}
+{% for h in kb_hits %}
+{% for c in h.checks %}
+- Check: {{ c }}
+{% endfor %}
+{% endfor %}
+
+## Timeline
+{% for e in timeline %}
+- {{ e.ts | ts }} [{{ e.source }}] {{ e.text }}
+{% else %}
+- (empty)
+{% endfor %}
+
+## Environment
+- Version: {{ environment.version_full or target.oracle_version or '-' }}; database {{ target.db_unique_name or '-' }}; nodes {{ target.nodes | join(', ') if target.nodes else '-' }}
+{% if environment.patches %}
+- Patches: {{ environment.patches | join('; ') }}
+{% endif %}
+{% if environment.nondefault_parameters %}
+- Non-default parameters: {% for k, v in environment.nondefault_parameters.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}
+
+## Artifacts
+{% for a in artifacts %}
+- `{{ a.id }}` {{ a.kind }} {{ a.path }} ({{ a.size }} bytes, sha256 {{ a.sha256[:12] }}...)
+{% else %}
+- (none)
+{% endfor %}

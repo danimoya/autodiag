@@ -21,21 +21,22 @@ def test_ping_and_diag_info(runner: SqlRunner) -> None:
     assert {"ADR Base", "ADR Home", "Diag Trace"} <= names
 
 
-def test_problems_and_trace_contents_over_sqlnet(runner: SqlRunner) -> None:
+def test_problems_and_trace_contents_over_sqlnet(runner: SqlRunner, testbed_source) -> None:
     probs = runner.run_named("diag_problems", {"since_hours": 24 * 30}).as_dicts()
-    assert any(str(p["PROBLEM_KEY"]).startswith("ORA 7445") for p in probs)
     p = next(p for p in probs if str(p["PROBLEM_KEY"]).startswith("ORA 7445"))
     incs = runner.run_named("diag_incidents", {"problem_id": p["PROBLEM_ID"]}).as_dicts()
-    assert incs and incs[0]["ERROR_NUMBER"] == 7445
+    assert incs and incs[0]["ERROR_NUMBER"] == 7445 and incs[0]["PROBLEM_KEY"] == p["PROBLEM_KEY"]
+    # V$DIAG_TRACE_FILE lists only trace/, but incident traces are readable by base name
     files = runner.run_named("diag_trace_files", {"since_hours": 24 * 30}).as_dicts()
-    inc_file = next(
-        f for f in files if f"_i{incs[0]['INCIDENT_ID']}.trc" in str(f["TRACE_FILENAME"])
-    )
+    assert files and all(str(f["TRACE_FILENAME"]).endswith(".trc") for f in files)
+    inc = testbed_source.get_incident(incs[0]["INCIDENT_ID"])
+    assert inc is not None and inc.trace_file
+    adr_home, _, rest = inc.trace_file.partition("/incident/")
     lines = runner.run_named(
         "diag_trace_file_contents",
         {
-            "adr_home": inc_file["ADR_HOME"],
-            "trace_filename": inc_file["TRACE_FILENAME"],
+            "adr_home": adr_home,
+            "trace_filename": rest.rsplit("/", 1)[-1],
             "line_from": 1,
             "line_to": 60,
         },

@@ -12,6 +12,14 @@ alert log are instance-level, so the account is created in `CDB$ROOT` with
 `ALTER SESSION SET CONTAINER`, which is why `SET CONTAINER` is granted. AutoDiag only
 switches container for catalog queries marked `scope: pdb`.
 
+## Which service to connect to
+
+Connect the diagnostic user to the **CDB root service** (the database service, not a PDB
+service). `V$DIAG_PROBLEM`, `V$DIAG_INCIDENT` and the alert-log views are filtered by
+container: a session in a PDB sees only that PDB's incidents and none of the CDB-level
+ones (background processes, instance-wide problems). AutoDiag switches to a PDB with
+`ALTER SESSION SET CONTAINER` only for queries marked `scope: pdb`.
+
 ## Grants
 
 ```sql

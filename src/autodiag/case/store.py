@@ -181,7 +181,8 @@ class CaseStore:
             updated_at=now,
         )
         self._conn.execute(
-            "INSERT INTO cases(id,target,title,status,problem_keys,window_from,window_to,notes,created_at,updated_at)"
+            "INSERT INTO cases(id,target,title,status,problem_keys,window_from,window_to,notes,"
+            "created_at,updated_at)"
             " VALUES (?,?,?,?,?,?,?,?,?,?)",
             (
                 case.id,
@@ -291,7 +292,8 @@ class CaseStore:
             created_at=now,
         )
         self._conn.execute(
-            "INSERT INTO artifacts(id,case_id,kind,path,sha256,size,origin,label,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO artifacts(id,case_id,kind,path,sha256,size,origin,label,created_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?)",
             (
                 art.id,
                 case_id,
@@ -356,7 +358,8 @@ class CaseStore:
             created_at=now,
         )
         self._conn.execute(
-            "INSERT INTO evidence(id,case_id,tool,params,summary,artifact_id,line_from,line_to,created_at)"
+            "INSERT INTO evidence(id,case_id,tool,params,summary,artifact_id,line_from,line_to,"
+            "created_at)"
             " VALUES (?,?,?,?,?,?,?,?,?)",
             (
                 ev.id,
@@ -432,7 +435,8 @@ class CaseStore:
             updated_at=now,
         )
         self._conn.execute(
-            "INSERT INTO findings(id,case_id,kind,title,detail,confidence,evidence,kb_refs,author,status,created_at,updated_at)"
+            "INSERT INTO findings(id,case_id,kind,title,detail,confidence,evidence,kb_refs,"
+            "author,status,created_at,updated_at)"
             " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 f.id,
@@ -509,7 +513,8 @@ class CaseStore:
             created_at=now,
         )
         self._conn.execute(
-            "INSERT INTO baselines(id,target,kind,artifact_id,label,created_at) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO baselines(id,target,kind,artifact_id,label,created_at)"
+            " VALUES (?,?,?,?,?,?)",
             (b.id, target, kind, artifact_id, label, _iso(now)),
         )
         return b
@@ -547,7 +552,8 @@ class CaseStore:
             rendered_at=now,
         )
         self._conn.execute(
-            "INSERT INTO reports(id,case_id,kind,markdown,ips_artifact_id,rendered_at) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO reports(id,case_id,kind,markdown,ips_artifact_id,rendered_at)"
+            " VALUES (?,?,?,?,?,?)",
             (r.id, case_id, kind, markdown, ips_artifact_id, _iso(now)),
         )
         return r
@@ -581,7 +587,8 @@ class CaseStore:
         now = _now()
         j = Job(id=_id("job"), kind=kind, params=params, created_at=now, updated_at=now)
         self._conn.execute(
-            "INSERT INTO jobs(id,kind,status,params,result,error,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+            "INSERT INTO jobs(id,kind,status,params,result,error,created_at,updated_at)"
+            " VALUES (?,?,?,?,?,?,?,?)",
             (j.id, kind, j.status, json.dumps(params, default=str), "{}", "", _iso(now), _iso(now)),
         )
         return j
@@ -634,7 +641,8 @@ class CaseStore:
             ).fetchone()
             if known:
                 self._conn.execute(
-                    "UPDATE problems SET problem_key=?, last_incident=?, lastinc_time=?, last_seen_at=? WHERE target=? AND problem_id=?",
+                    "UPDATE problems SET problem_key=?, last_incident=?, lastinc_time=?,"
+                    "last_seen_at=? WHERE target=? AND problem_id=?",
                     (
                         p.problem_key,
                         p.last_incident,
@@ -647,7 +655,9 @@ class CaseStore:
             else:
                 new.append(p.problem_id)
                 self._conn.execute(
-                    "INSERT INTO problems(target,problem_id,problem_key,adr_home,first_incident,last_incident,lastinc_time,first_seen_at,last_seen_at)"
+                    "INSERT INTO problems(target,problem_id,problem_key,adr_home,"
+                    "first_incident,last_incident,"
+                    "lastinc_time,first_seen_at,last_seen_at)"
                     " VALUES (?,?,?,?,?,?,?,?,?)",
                     (
                         target,
@@ -687,8 +697,11 @@ class CaseStore:
         n = 0
         for i in incidents:
             self._conn.execute(
-                "INSERT INTO incidents(target,incident_id,problem_id,problem_key,create_time,trace_file,seen_at) VALUES (?,?,?,?,?,?,?)"
-                " ON CONFLICT(target,incident_id) DO UPDATE SET problem_key=excluded.problem_key, trace_file=excluded.trace_file, seen_at=excluded.seen_at",
+                "INSERT INTO incidents(target,incident_id,problem_id,problem_key,"
+                "create_time,trace_file,"
+                "seen_at) VALUES (?,?,?,?,?,?,?)"
+                " ON CONFLICT(target,incident_id) DO UPDATE SET problem_key=excluded.problem_key,"
+                "trace_file=excluded.trace_file, seen_at=excluded.seen_at",
                 (
                     target,
                     i.incident_id,

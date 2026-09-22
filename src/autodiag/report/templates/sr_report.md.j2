@@ -1,0 +1,70 @@
+# Service Request draft: {{ case.title }}
+
+Prepared by AutoDiag on {{ generated_at | ts }} for case `{{ case.id }}`. Lines marked `<fill in>` need the DBA's input before submission.
+
+## Problem statement
+{% set root = findings | selectattr('kind', 'equalto', 'root_cause') | list %}
+Problem key(s): {{ case.problem_keys | join(', ') if case.problem_keys else '<fill in>' }}
+{% if root %}
+{{ root[0].title }}: {{ root[0].detail }}
+{% else %}
+<fill in>: one paragraph describing the symptom, when it started and what changed.
+{% endif %}
+First / last occurrence: {% if incidents %}{{ incidents[-1].create_time | ts }} / {{ incidents[0].create_time | ts }}{% else %}<fill in>{% endif %}
+Frequency: {{ incidents | length }} incident(s) in the case window.
+
+## Business impact
+<fill in>: affected application / service, users, whether the instance crashed, workaround in place. Severity requested: <fill in>.
+
+## Environment
+- Database: {{ target.db_unique_name or '<fill in>' }} ({{ target.kind }}), platform {{ target.platform }}
+- Version: {{ environment.version_full or target.oracle_version or '<fill in>' }}
+- Patches: {% if environment.patches %}{{ environment.patches | join('; ') }}{% else %}<fill in> (opatch lspatches / DBA_REGISTRY_SQLPATCH){% endif %}
+- Nodes: {{ target.nodes | join(', ') if target.nodes else '<fill in>' }}
+{% if environment.nondefault_parameters %}
+- Non-default parameters: {% for k, v in environment.nondefault_parameters.items() %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}
+
+## Incidents
+{% for i in incidents %}
+- {{ i.create_time | ts }} incident {{ i.incident_id }} `{{ i.problem_key }}`{% if i.first_app_frame %} signaling/first frame `{{ i.first_app_frame }}`{% endif %}{% if i.sql_id %} sql_id {{ i.sql_id }}{% endif %}
+{% else %}
+- <fill in>
+{% endfor %}
+
+## Analysis so far
+{% for f in findings %}
+- [{{ f.kind }}, {{ f.confidence | pct }}] {{ f.title }}: {{ f.detail }} (evidence {{ f.evidence_ids | join(', ') }})
+{% else %}
+- <fill in>
+{% endfor %}
+{% for n in stack_notes %}
+- Call stack comparison: {{ n }}
+{% endfor %}
+{% if profile_summary %}
+- SQL trace comparison: {{ profile_summary }}
+{% endif %}
+
+## Steps already taken
+<fill in>: restarts, patches, workarounds tried and their effect.
+
+## Diagnostic files
+{% for a in artifacts %}
+- {{ a.kind }}: {{ a.path }} ({{ a.size }} bytes, sha256 {{ a.sha256 }})
+{% else %}
+- <fill in>: attach the ADRCI IPS package for the problem
+{% endfor %}
+- ADRCI IPS package: <fill in> (create with `ips create package problem <id>` / `ips generate package`)
+- AHF diagcollect for the window: <fill in>
+
+## Timeline
+{% for e in timeline %}
+- {{ e.ts | ts }} [{{ e.source }}] {{ e.text }}
+{% else %}
+- <fill in>
+{% endfor %}
+
+## Evidence references
+{% for e in evidence %}
+- `{{ e.id }}` {{ e.tool }}: {{ e.summary }}
+{% endfor %}
