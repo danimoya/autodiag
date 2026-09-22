@@ -80,3 +80,22 @@ def test_parse_incident(incident_text: str) -> None:
     assert next(c for c in ctx if c.func == "qerixtFetch").component == "SQL_Execution"
     assert inc.first_app_frame == "qeilbk1"
     assert inc.summary_lines()[0].startswith("ORA 7445 [qeilbk1]")
+
+
+def test_parse_ora600_incident(fixtures_dir: Path) -> None:
+    inc = parse_incident((fixtures_dir / "23ai/traces/incident_ora600.trc").read_text())
+    assert inc.incident_id == 10192 and inc.problem_key == "ORA 600 [autodiag_test]"
+    assert inc.error_code == 600 and inc.error_args == ["autodiag_test", "0", "0"]
+    assert inc.exception is None
+    sig = next(c for c in inc.context_frames if c.signaling)
+    assert sig.func == "dbkeTestFlowKGE_ORA" and sig.component == "rdbms_dde"
+    assert inc.first_app_frame == "dbkeTestFlowKGE_ORA"
+    assert inc.call_stack is not None and inc.call_stack.frames[0].func == "ksedst1"
+
+
+def test_parse_ora700_incident(fixtures_dir: Path) -> None:
+    inc = parse_incident((fixtures_dir / "23ai/traces/incident_ora700.trc").read_text())
+    assert inc.incident_id == 10196 and inc.problem_key == "ORA 700 [foo]"
+    assert inc.error_code == 700 and inc.error_args == ["foo", "bar", "baz"]
+    assert inc.first_app_frame == "dbkeTestFlowKGE_Soft"
+    assert inc.summary_lines()[0].startswith("ORA 700 [foo]")

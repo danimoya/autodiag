@@ -1,0 +1,208 @@
+Dump file /opt/oracle/diag/rdbms/free/FREE/incident/incdir_10193/FREE_ora_15662_i10193.trc
+Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free
+Version 23.26.3.0.0
+Build label:    RDBMS_23.26.3.0.0DBRU_LINUX.X64_260704
+ORACLE_HOME:    /opt/oracle/product/26ai/dbhomeFree
+System name:	Linux
+Node name:	oradb-test
+Release:	5.14.0-611.34.1.el9_7.x86_64
+Version:	#1 SMP PREEMPT_DYNAMIC Mon Feb 23 12:07:36 UTC 2026
+Machine:	x86_64
+CLID:	P
+Instance name: FREE
+Instance number: 1
+Database name: FREE 
+Database unique name: FREE 
+Database id: 1509902213
+Database role: PRIMARY
+Redo thread mounted by this instance: 1
+Oracle binary inode: 	9783192
+Oracle process number: 72
+Unix process pid:       15662
+             NID:       4026537473
+             created:   2026-09-22T13:25:18.26096-4855+00:00
+             image:     oracle@oradb-test (TNS V1-V3)
+
+
+*** 2026-09-22T13:25:19.651843+00:00
+*** SESSION ID:(64.58631) 2026-09-22T13:25:19.651853+00:00
+*** CLIENT ID:() 2026-09-22T13:25:19.651862+00:00
+*** SERVICE NAME:(SYS$USERS) 2026-09-22T13:25:19.651870+00:00
+*** MODULE NAME:(sqlplus@oradb-test (TNS V1-V3)) 2026-09-22T13:25:19.651879+00:00
+*** ACTION NAME:() 2026-09-22T13:25:19.651887+00:00
+*** CLIENT DRIVER:(SQL*PLUS) 2026-09-22T13:25:19.651895+00:00
+*** CONTAINER ID:(1) 2026-09-22T13:25:19.651903+00:00
+*** CLIENT IP:(N/A) 2026-09-22T13:25:19.651912+00:00
+*** CONNECTION ID:(XBNMRyNUPS3gYwIAHqx++g==) 2026-09-22T13:25:19.651922+00:00
+ 
+[TOC00000]
+Jump to table of contents
+Dump continued from file: /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_15662.trc
+[TOC00001]
+ORA-00600: internal error code, arguments: [autodiag_repeat], [1], [0], [], [], [], [], [], [], [], [], []
+
+[TOC00001-END]
+[TOC00002]
+========= Dump for incident 10193 (ORA 600 [autodiag_repeat]) ========
+
+*** 2026-09-22T13:25:19.676978+00:00
+dbkedDefDump(): Starting incident default dumps (flags=0x2, level=3, mask=0x0)
+[TOC00003]
+----- SQL Statement (None) -----
+Current SQL information unavailable - no cursor.
+[TOC00004]
+----- Parser State -----
+Parser state0: (no current call) prx=0x7fae62115120
+Parser state1: len1=0 len2=0 pos1=0 pos2=0
+Parser state2: flg=0x0 xflg=0x0 xxflg=0x0 3xflg=0x800
+Parser state3: ptty=0 tty=0 tlen=0
+Parser state4: vdepth=0 pdepth=0
+Parser errs: err1=0 err2=0 err3=0
+Parser string: prx=0x7fae62115120 base=0x0 cur=0x0
+[TOC00004-END]
+[TOC00003-END]
+
+[TOC00005]
+----- Call Stack Trace -----
+calling              call     entry                argument values in hex      
+location             type     point                (? means dubious value)     
+-------------------- -------- -------------------- ----------------------------
+ksedst1()+95         call     kgdsdst()            7FFDED099360 000000002
+                                                   7FFDED0917E0 ? 7FFDED091980 ?
+                                                   7FFDED098FF0 ? 000000082 ?
+ksedst()+50          call     ksedst1()            000000000 000000001
+                                                   7FFDED0917E0 ? 7FFDED091980 ?
+                                                   7FFDED098FF0 ? 000000082 ?
+dbkedDefDump()+2690  call     ksedst()             000000000 000000001 ?
+0                                                  7FFDED0917E0 ? 7FFDED091980 ?
+                                                   7FFDED098FF0 ? 000000082 ?
+ksedmp()+698         call     dbkedDefDump()       000000003 000000002
+                                                   7FFDED0917E0 ? 7FFDED091980 ?
+                                                   7FFDED098FF0 ? 000000082 ?
+dbgexPhaseII()+2196  call     ksedmp()             0000003EB 000000002 ?
+                                                   7FFDED0917E0 ? 7FFDED091980 ?
+                                                   7FFDED098FF0 ? 000000082 ?
+dbgexExplicitEndInc  call     dbgexPhaseII()       7FAE6209D728 7FAE608CB0A8
+()+387                                             7FFDED09A8A0 7FFDED091980 ?
+                                                   7FFDED098FF0 ? 000000082 ?
+dbgeEndDDEInvocatio  call     dbgexExplicitEndInc  7FAE6209D728 7FAE608CB0A8
+nImpl()+314                   ()                   7FFDED09A8A0 ? 7FFDED091980 ?
+                                                   7FFDED098FF0 ? 000000082 ?
+dbkeTestFlowKGE_ORA  call     dbgeEndDDEInvocatio  7FAE6209D728 7FAE608CB0A8
+()+2588                       nImpl()              7FAE620DE0E0 7FFDED091980 ?
+                                                   7FAE620DE0E0 000000082 ?
+dbkeTest()+413       call     dbkeTestFlowKGE_ORA  7FAE6209D728 000000003
+                              ()                   7FFDED09C4C8 7FFDED09C428
+                                                   7FAE620DE0E0 ? 000000082 ?
+ksdxuth()+2237       call     dbkeTest()           000000005 7FFDED09C4B8
+                                                   7FFDED09C418 7FFDED09C428 ?
+                                                   7FAE620DE0E0 ? 000000082 ?
+ksdxen_int()+5829    call     ksdxuth()            7FFDED09D6B0 000000038
+                                                   000000006 7FFDED09C4B0
+                                                   7FFDED09C410 000000082 ?
+opiodr()+1593        call     ksdxen_int()         000000056 000000016
+                                                   7FFDED0A00A0 000000001
+                                                   7FFDED09C410 ? 000000082 ?
+ttcpip()+1565        call     opiodr()             000000056 000000016 ?
+                                                   7FFDED0A00A0 ? 000000000
+                                                   7FFDED09C410 ? 000000082 ?
+opitsk()+2197        call     ttcpip()             000000056 ? 000000056
+                                                   7FFDED0A00A0 000000000 ?
+                                                   7FFDED09FAE0 000000082 ?
+opiino()+1111        call     opitsk()             000000000 000000000
+                                                   7FFDED0A00A0 ? 000000000 ?
+                                                   7FFDED09FAE0 ? 000000082 ?
+opiodr()+1593        call     opiino()             00000003C 000000004
+                                                   7FFDED0A1988 000000000 ?
+                                                   7FFDED09FAE0 ? 000000082 ?
+opidrv()+1048        call     opiodr()             00000003C 000000004 ?
+                                                   7FFDED0A1988 ? 000000000
+                                                   7FFDED09FAE0 ? 000000082 ?
+sou2o()+153          call     opidrv()             00000003C 000000004
+                                                   7FFDED0A1988 000000000 ?
+                                                   7FFDED09FAE0 ? 000000082 ?
+opimai_real()+448    call     sou2o()              7FFDED0A1960 00000003C
+                                                   000000004 7FFDED0A1988
+                                                   7FFDED09FAE0 ? 000000082 ?
+ssthrdmain()+535     call     opimai_real()        000000002 7FFDED0A2198
+                                                   000000004 ? 7FFDED0A1988 ?
+                                                   7FFDED09FAE0 ? 000000082 ?
+main()+313           call     ssthrdmain()         000000000 000000002
+                                                   7FFDED0A2198 7FFDED0A1988 ?
+                                                   7FFDED09FAE0 ? 000000082 ?
+__libc_start_main()  call     main()               000000002 7FFDED0A2358
++229                                               7FFDED0A2198 ? 7FFDED0A1988 ?
+                                                   7FFDED09FAE0 ? 000000082 ?
+_start()+46          call     __libc_start_main()  0010059C0 000000002
+[... call stack continues ...]
+printing argument data : 0.018000 sec
+
+
+----- End of Call Stack Trace -----
+
+
+DDE flags: 0x0
+Heap: 0x7fae608ca438
+Incident Context pointer in diag: 0x7fae608cb950
+Incident ID Cache: 0x7cb01d20 
+Invocation Context #: 0
+----- Invocation Context Dump -----
+Address: 0x7fae608cb0a8
+Phase: 3
+flags: 0x18E0001
+Incident ID: 10193
+Error Descriptor: ORA-600 [autodiag_repeat] [1] [0] [] [] [] [] [] [] [] [] []
+Error class: 0
+Problem Key # of args: 1
+Number of actions: 33
+----- Incident Context Dump -----
+Address: 0x7fae608cb950
+Incident ID: 10193
+Problem Key: ORA 600 [autodiag_repeat]
+Error: ORA-600 [autodiag_repeat] [1] [0] [] [] [] [] [] [] [] [] []
+[00]: dbgexExplicitEndInc [diag_dde]
+[01]: dbgeEndDDEInvocationImpl [diag_dde]
+[02]: dbkeTestFlowKGE_ORA [rdbms_dde]<-- Signaling
+[03]: dbkeTest [rdbms_dde]
+[04]: ksdxuth [ksd_uts]
+[05]: ksdxen_int [ksd_uts]
+[06]: opiodr [OPI]
+[07]: ttcpip []
+[08]: opitsk [OPI]
+[09]: opiino [OPI]
+[10]: opiodr [OPI]
+[11]: opidrv [OPI]
+[12]: sou2o []
+[13]: opimai_real [OPI]
+[14]: ssthrdmain []
+[15]: main []
+[16]: __libc_start_main []
+[17]: _start []
+MD [00]: 'SID'='64.58631' (0x2)
+MD [01]: 'ProcId'='72.5' (0x2)
+MD [02]: 'Service'='SYS$USERS' (0x200)
+MD [03]: 'Module'='sqlplus@oradb-test (TNS V1-V3)' (0x200)
+MD [04]: 'PdbName'='CDB$ROOT' (0x0)
+MD [05]: 'Client ProcId'='oracle@oradb-test (TNS V1-V3).15662_140386946487232' (0x0)
+Impact 0: 
+Impact 1: 
+Impact 2: 
+Impact 3: 
+Derived Impact: 
+----- END Incident Context Dump -----
+--------- Invocation TOC Context ---------
+Current TOC number: 0
+Current TOC section depth: 0
+TOC enabled?: No
+TOC Magic: 0
+TOC Flags: 0
+------- END Invocation TOC Context -------
+----- END Invocation Context Dump -----
+Invocation Context #: 1
+----- Invocation Context Dump -----
+Address: 0x7fae608d1c58
+Phase: 0
+flags: 0x0
+Incident ID: 0
+Error Descriptor: 
+Error class: 0

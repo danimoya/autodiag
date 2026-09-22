@@ -140,3 +140,20 @@ def test_headless_agent_mentions_expected_keywords(name: str, tmp_path: Path) ->
     answer = "\n".join(texts)
     missing = [k for k in sc["expect"]["answer_keywords"] if k.lower() not in answer.lower()]
     assert not missing, f"answer lacks {missing}:\n{answer[:1500]}"
+
+
+async def test_scenario_ora600_repeat(server) -> None:
+    sc = load("ora600_repeat")
+    cid = (await call(server, "open_case", target="testbed", title=sc["name"]))["case"]["id"]
+    ids = [
+        (await call(server, "add_artifact_to_case", case_id=cid, path=p))["artifact"]["id"]
+        for p in sc["inputs"]["artifacts"]
+    ]
+    t = await call(server, "parse_trace", artifact_id=ids[0])
+    assert t["trace"]["problem_key"] == sc["expect"]["problem_key"]
+    assert t["trace"]["first_app_frame"] == sc["expect"]["signaling_frame"]
+    f = await call(server, "stack_frequency", artifact_ids=ids)
+    sig = next(x for x in f["frames"] if x["func"] == sc["expect"]["signaling_frame"])
+    assert sig["share"] == sc["expect"]["signature_share"] and sig["signature"]
+    kb = await call(server, "kb_lookup", problem_key=t["trace"]["problem_key"])
+    assert kb["hits"][0]["kind"] == sc["expect"]["kb_kind"]

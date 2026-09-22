@@ -1,0 +1,13 @@
+name: ora600_repeat
+description: three ORA-600 incidents under one problem key from the DDE unit-test hook
+inputs:
+  artifacts:
+    - tests/fixtures/23ai/traces/incident_ora600.trc
+    - tests/fixtures/23ai/traces/incident_ora600_repeat_a.trc
+    - tests/fixtures/23ai/traces/incident_ora600_repeat_b.trc
+expect:
+  problem_key: "ORA 600 [autodiag_test]"
+  signaling_frame: dbkeTestFlowKGE_ORA
+  signature_share: 1.0
+  kb_kind: ora600_generic
+  answer_keywords: [ORA-600, autodiag_test, "consistent"]

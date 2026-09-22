@@ -102,3 +102,17 @@ def test_component_lookup_longest_prefix() -> None:
     assert component_of("kdxbrs1") == "index block layer (B-tree)"
     assert component_of("__sighandler") is None or isinstance(component_of("__sighandler"), str)
     assert component_of("zzz_unknown") is None
+
+
+def test_frequency_across_real_repeated_incidents(fixtures_dir: Path) -> None:
+    names = ["incident_ora600.trc", "incident_ora600_repeat_a.trc", "incident_ora600_repeat_b.trc"]
+    stacks = [
+        stack_from_incident(parse_incident((fixtures_dir / "23ai/traces" / n).read_text())).frames
+        for n in names
+    ]
+    freq = frame_frequency(stacks)
+    by = {f.func: f for f in freq}
+    assert by["dbkeTestFlowKGE_ORA"].share == 1.0 and by["dbkeTestFlowKGE_ORA"].signature
+    assert all(f.signature for f in freq)  # identical code path: every frame is a signature frame
+    d = compare_stacks(stacks[0], stacks[1])
+    assert d.similarity == 1.0 and d.divergence_index is None
