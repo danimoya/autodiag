@@ -45,6 +45,14 @@ status=...`. `faults/inject.sh all` runs them in order and writes `faults/out/fa
 Repeated faults with the same problem key are flood-controlled by Oracle after a few
 occurrences per hour; the scripts vary their arguments to avoid that.
 
+### ORADEBUG on Oracle Database Free
+
+The Free edition disables ORADEBUG (`ORA-32519`), which the ORA-600 / ORA-700 scripts
+need. The first-start hook therefore sets `_disable_oradebug_commands = none` in the
+spfile and restarts the instance once (`AUTODIAG_ENABLE_ORADEBUG=false` in `.env` keeps
+it disabled). This is only appropriate on a throwaway test instance; never change it on
+a production database.
+
 ## Reset
 
 ```bash
