@@ -89,7 +89,13 @@ class Settings(BaseSettings):
 
     # Housekeeping
     retention_days: int = 90
+    scan_enabled: bool = Field(
+        default=False, description="Scan targets for new problems in the service"
+    )
     scan_interval_minutes: int = 30
+    notify_command: str | None = Field(
+        default=None, description="Command run with the notification text as its argument"
+    )
 
     @field_validator("data_dir", "targets_file", "ssh_config", mode="after")
     @classmethod

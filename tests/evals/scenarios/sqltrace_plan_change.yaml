@@ -1,0 +1,10 @@
+name: sqltrace_plan_change
+description: report_customer slows down after its index is made invisible
+inputs:
+  normal_artifact: tests/fixtures/23ai/traces/AUTODIAG_NORMAL.trc
+  anomaly_artifact: tests/fixtures/23ai/traces/AUTODIAG_ANOMALY.trc
+expect:
+  tag: PLAN_CHANGE
+  cursor_text_contains: OI.QTY
+  hint_contains: "plan changed"
+  answer_keywords: [PLAN_CHANGE, index, "logical reads"]

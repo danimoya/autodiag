@@ -37,9 +37,21 @@ def redact_for_llm(text: str, *, enabled: bool = True) -> str:
 
 
 def _host_repl(m: re.Match[str]) -> str:
+    """Mask host names but keep versions, file names and dotted SQL identifiers (OI.QTY)."""
     token = m.group(1)
     if token.lower().endswith(_KEEP_SUFFIXES):
         return token
     if re.fullmatch(r"[\d.]+", token):  # version numbers like 23.26.3.0.0
         return token
-    return "<host>"
+    labels = token.split(".")
+    if len(labels) >= 3:
+        return "<host>"
+    last = labels[-1]
+    if (
+        token == token.lower()
+        and last.isalpha()
+        and len(last) >= 2
+        and any(c.isalpha() for c in labels[0])
+    ):
+        return "<host>"
+    return token

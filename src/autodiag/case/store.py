@@ -107,6 +107,15 @@ class Job(BaseModel):
     updated_at: datetime
 
 
+class ScanRow(BaseModel):
+    id: str
+    target: str
+    started_at: datetime
+    finished_at: datetime | None = None
+    new_problems: list[int] = Field(default_factory=list)
+    summary: str = ""
+
+
 class ProblemRow(BaseModel):
     target: str
     problem_id: int
@@ -629,6 +638,53 @@ class CaseStore:
             created_at=_dt(r["created_at"]),
             updated_at=_dt(r["updated_at"]),
         )
+
+    # -- scans --------------------------------------------------------------------------
+    def start_scan(self, target: str, started_at: datetime) -> str:
+        sid = _id("scan")
+        self._conn.execute(
+            "INSERT INTO scans(id,target,started_at) VALUES (?,?,?)",
+            (sid, target, _iso(started_at)),
+        )
+        return sid
+
+    def finish_scan(
+        self, scan_id: str, finished_at: datetime, new_problems: list[int], summary: str
+    ) -> None:
+        self._conn.execute(
+            "UPDATE scans SET finished_at=?, new_problems=?, summary=? WHERE id=?",
+            (_iso(finished_at), json.dumps(new_problems), summary, scan_id),
+        )
+
+    def list_scans(self, target: str | None = None, *, limit: int = 50) -> list[ScanRow]:
+        sql, args = "SELECT * FROM scans", []
+        if target:
+            sql, args = sql + " WHERE target=?", [target]
+        rows = self._conn.execute(sql + " ORDER BY started_at DESC LIMIT ?", [*args, limit])
+        return [
+            ScanRow(
+                id=r["id"],
+                target=r["target"],
+                started_at=_dt(r["started_at"]),
+                finished_at=_dt(r["finished_at"]),
+                new_problems=json.loads(r["new_problems"]),
+                summary=r["summary"],
+            )
+            for r in rows
+        ]
+
+    def delete_case(self, case_id: str) -> None:
+        """Remove a case and everything attached to it (files are the caller's job)."""
+        for table in ("reports", "findings", "evidence", "baselines"):
+            col = "case_id" if table != "baselines" else None
+            if col:
+                self._conn.execute(f"DELETE FROM {table} WHERE case_id=?", (case_id,))
+        self._conn.execute(
+            "DELETE FROM baselines WHERE artifact_id IN (SELECT id FROM artifacts WHERE case_id=?)",
+            (case_id,),
+        )
+        self._conn.execute("DELETE FROM artifacts WHERE case_id=?", (case_id,))
+        self._conn.execute("DELETE FROM cases WHERE id=?", (case_id,))
 
     # -- problem / incident snapshots ------------------------------------------------------
     def upsert_problems(self, target: str, problems: list[AdrProblem]) -> list[int]:

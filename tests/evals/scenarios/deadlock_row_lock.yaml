@@ -1,0 +1,8 @@
+name: deadlock_row_lock
+description: two sessions update LOCK_DEMO rows in opposite order
+inputs:
+  artifact: tests/fixtures/23ai/traces/deadlock_ora60.trc
+expect:
+  classification_contains: "TX row-lock cycle"
+  cycle: [68, 70]
+  answer_keywords: [deadlock, LOCK_DEMO, "row lock"]

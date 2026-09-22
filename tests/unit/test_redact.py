@@ -35,5 +35,21 @@ def test_versions_are_not_mistaken_for_ips() -> None:
     assert "10.0.0.5" not in out and "192.168.1.10" not in out
 
 
+def test_sql_identifiers_and_file_names_survive() -> None:
+    out = redact_for_llm(
+        "SELECT SUM(OI.QTY * OI.PRICE) FROM ORDERS O JOIN ORDER_ITEMS OI "
+        "ON OI.ORDER_ID = O.ORDER_ID"
+    )
+    assert "OI.QTY" in out and "OI.ORDER_ID" in out
+    out = redact_for_llm(
+        "image: oracle@dbnode01.example.internal file alert_FREE.log on host db01.corp"
+    )
+    assert (
+        "dbnode01.example.internal" not in out
+        and "db01.corp" not in out
+        and "alert_FREE.log" in out
+    )
+
+
 def test_disabled_is_identity() -> None:
     assert redact_for_llm("value=1 'x'", enabled=False) == "value=1 'x'"

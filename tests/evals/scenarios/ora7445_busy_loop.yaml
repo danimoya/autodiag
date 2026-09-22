@@ -1,0 +1,13 @@
+name: ora7445_busy_loop
+description: SIGSEGV in an index lookup during a PL/SQL busy loop (fixtures from the testbed fault kit)
+inputs:
+  target: testbed
+  incident_artifact: tests/fixtures/23ai/traces/incident_ora7445.trc
+  second_incident_artifact: tests/fixtures/23ai/traces/incident_ora7445_b.trc
+expect:
+  problem_key: "ORA 7445 [qeilbk1]"
+  first_app_frame: qeilbk1
+  component_contains: "index"
+  divergence_index: 0
+  kb_kind: ora7445
+  answer_keywords: [qeilbk1, SIGSEGV, "PKG_ORDERS.BUSY_LOOP"]
