@@ -11,8 +11,10 @@ app = typer.Typer(
 
 @app.command("run")
 def run(
-    target: str = typer.Option(None, "--target", "-t"), days: int = typer.Option(7, "--days")
+    target: str = typer.Option(None, "--target", "-t", help="One target (default: all)."),
+    days: int = typer.Option(7, "--days", help="Look back this many days."),
 ) -> None:
+    """Scan for ADR problems now and notify on new problem keys (no LLM involved)."""
     s = common.settings()
     ctx = default_context(s, common.inventory(s))
     results = (
@@ -26,13 +28,19 @@ def run(
 
 
 @app.command("list")
-def list_scans(target: str = typer.Option(None, "--target", "-t")) -> None:
+def list_scans(
+    target: str = typer.Option(None, "--target", "-t", help="Only this target."),
+) -> None:
+    """List past scans and their summaries."""
     for sc in common.store().list_scans(target):
         typer.echo(f"{sc.id}  {sc.target}  {common.fmt_ts(sc.started_at)}  {sc.summary}")
 
 
 @app.command("purge")
-def purge_cases(days: int = typer.Option(None, "--days")) -> None:
+def purge_cases(
+    days: int = typer.Option(None, "--days", help="Age in days (default: retention_days)."),
+) -> None:
+    """Delete closed cases older than --days together with their artifact files."""
     from autodiag.case.retention import purge
 
     s = common.settings()

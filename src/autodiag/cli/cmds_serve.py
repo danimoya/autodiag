@@ -20,7 +20,8 @@ def stdio() -> None:
 
 @app.command("http")
 def http(
-    host: str = typer.Option(None, "--host"), port: int = typer.Option(None, "--port")
+    host: str = typer.Option(None, "--host", help="Bind address (default: listen_host)."),
+    port: int = typer.Option(None, "--port", help="Port (default: listen_port)."),
 ) -> None:
     """Serve MCP over streamable HTTP at /mcp (bearer token from AUTODIAG_MCP_TOKEN when set)."""
     server, s = _server()

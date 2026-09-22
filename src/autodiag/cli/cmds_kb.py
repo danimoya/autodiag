@@ -8,13 +8,14 @@ app = typer.Typer(help="Knowledge base lookups.")
 
 @app.command("lookup")
 def lookup(
-    problem_key: str = typer.Option(None, "--problem-key", "-k"),
-    frame: list[str] = typer.Option([], "--frame", "-f"),
-    alert: str = typer.Option(None, "--alert"),
-    wait: list[str] = typer.Option([], "--wait", "-w"),
-    platform: str = typer.Option("generic", "--platform"),
-    as_json: bool = typer.Option(False, "--json"),
+    problem_key: str = typer.Option(None, "--problem-key", "-k", help="ADR problem key."),
+    frame: list[str] = typer.Option([], "--frame", "-f", help="Stack frame (repeatable)."),
+    alert: str = typer.Option(None, "--alert", help="Alert-log message or signature."),
+    wait: list[str] = typer.Option([], "--wait", "-w", help="Wait event (repeatable)."),
+    platform: str = typer.Option("generic", "--platform", help="generic or exacc."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Query the knowledge base by problem key, stack frames, alert signature or wait events."""
     hits = kb_lookup(
         problem_key=problem_key,
         frames=list(frame) or None,

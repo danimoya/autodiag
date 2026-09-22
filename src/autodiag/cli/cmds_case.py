@@ -10,11 +10,12 @@ app = typer.Typer(help="Cases: collect artifacts, record evidence and findings."
 
 @app.command("open")
 def open_case(
-    title: str = typer.Argument(...),
-    target: str = typer.Option(..., "--target", "-t"),
-    problem_key: list[str] = typer.Option([], "--problem-key", "-k"),
-    as_json: bool = typer.Option(False, "--json"),
+    title: str = typer.Argument(..., help="Short case title."),
+    target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
+    problem_key: list[str] = typer.Option([], "--problem-key", "-k", help="Repeatable."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Open a case for a target, optionally tagged with one or more problem keys."""
     s = common.settings()
     common.target(target, s)
     c = common.store(s).open_case(target, title, problem_keys=list(problem_key))
@@ -23,9 +24,10 @@ def open_case(
 
 @app.command("list")
 def list_cases(
-    target: str = typer.Option(None, "--target", "-t"),
-    as_json: bool = typer.Option(False, "--json"),
+    target: str = typer.Option(None, "--target", "-t", help="Only this target."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
 ) -> None:
+    """List cases, optionally only those of one target."""
     cases = common.store().list_cases(target=target)
     common.emit(
         {"cases": [c.model_dump() for c in cases]},
@@ -38,7 +40,11 @@ def list_cases(
 
 
 @app.command("show")
-def show_case(case_id: str, as_json: bool = typer.Option(False, "--json")) -> None:
+def show_case(
+    case_id: str,
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
+) -> None:
+    """Show a case: artifacts, evidence, findings and reports."""
     st = common.store()
     c = st.get_case(case_id)
     arts, evs, fnds, reps = (
@@ -72,6 +78,7 @@ def show_case(case_id: str, as_json: bool = typer.Option(False, "--json")) -> No
 
 @app.command("close")
 def close_case(case_id: str) -> None:
+    """Close a case; 'scan purge' may delete it after the retention period."""
     common.store().close_case(case_id)
     typer.echo(f"closed {case_id}")
 
@@ -80,10 +87,11 @@ def close_case(case_id: str) -> None:
 def add_artifact(
     case_id: str,
     path: Path = typer.Argument(..., exists=True),
-    kind: str = typer.Option("trace", "--kind"),
-    label: str = typer.Option("", "--label"),
-    as_json: bool = typer.Option(False, "--json"),
+    kind: str = typer.Option("trace", "--kind", help="trace, alertlog, ips, other."),
+    label: str = typer.Option("", "--label", help="Free-text label."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Attach a local file (trace, log, IPS zip) to a case as an artifact (deduplicated)."""
     a = common.store().add_artifact(
         case_id, kind=kind, path=path, origin={"source": "local", "path": str(path)}, label=label
     )
@@ -121,15 +129,16 @@ def analyze_artifact(
 @app.command("finding")
 def add_finding(
     case_id: str,
-    kind: str = typer.Option(..., "--kind"),
-    title: str = typer.Option(..., "--title"),
-    detail: str = typer.Option("", "--detail"),
-    confidence: float = typer.Option(0.5, "--confidence"),
-    evidence: list[str] = typer.Option([], "--evidence", "-e"),
-    kb_ref: list[str] = typer.Option([], "--kb-ref"),
-    author: str = typer.Option("human", "--author"),
-    as_json: bool = typer.Option(False, "--json"),
+    kind: str = typer.Option(..., "--kind", help="root_cause, contributing, observation, action."),
+    title: str = typer.Option(..., "--title", help="One-line statement."),
+    detail: str = typer.Option("", "--detail", help="Reasoning and next checks."),
+    confidence: float = typer.Option(0.5, "--confidence", help="0.0 to 1.0."),
+    evidence: list[str] = typer.Option([], "--evidence", "-e", help="Evidence id (repeatable)."),
+    kb_ref: list[str] = typer.Option([], "--kb-ref", help="KB reference (repeatable)."),
+    author: str = typer.Option("human", "--author", help="human, agent or rule."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Record a finding (root_cause|contributing|observation|action) backed by evidence ids."""
     f = common.store().add_finding(
         case_id,
         kind=kind,
@@ -146,10 +155,11 @@ def add_finding(
 @app.command("evidence")
 def add_evidence(
     case_id: str,
-    summary: str = typer.Argument(...),
-    tool: str = typer.Option("manual", "--tool"),
-    as_json: bool = typer.Option(False, "--json"),
+    summary: str = typer.Argument(..., help="What was observed."),
+    tool: str = typer.Option("manual", "--tool", help="Origin label."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Record a manual piece of evidence (an observation made outside AutoDiag)."""
     ev = common.store().record_evidence(tool, {}, summary, case_id=case_id)
     common.emit(ev, as_json=as_json, lines=[f"{ev.id}: {summary}"])
 
@@ -157,8 +167,8 @@ def add_evidence(
 @app.command("collect-incident")
 def collect_incident(
     case_id: str,
-    incident_id: int = typer.Option(..., "--id"),
-    as_json: bool = typer.Option(False, "--json"),
+    incident_id: int = typer.Option(..., "--id", help="ADR incident id."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
     """Fetch an incident's trace from the case's target, store it as an artifact, parse it and
     record the summary as evidence."""

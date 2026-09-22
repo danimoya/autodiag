@@ -21,6 +21,20 @@ Environment-specific values (hosts, models, credentials) never live in this repo
 Copy `.env.example` to `.env` and create `~/.config/autodiag/config.toml` and
 `~/.config/autodiag/targets.yaml` from the examples in `docs/`.
 
+## Using it
+
+Every command has `-h` / `--help`; `docs/cli.md` is the CLI reference with two
+walkthroughs (an ORA-600 and a 10046 comparison). `docs/opencode.md` covers the agent
+side, `docs/architecture.md` the service, `docs/testbed.md` the Oracle Free test
+container and fault kit, `docs/roadmap.md` what is still pending.
+
+```bash
+autodiag targets list
+autodiag adr problems --target <name> --days 7
+autodiag adr incident --target <name> --id <incident> --fetch
+autodiag diff stacks anomaly.trc normal.trc
+```
+
 ## Development
 
 ```bash

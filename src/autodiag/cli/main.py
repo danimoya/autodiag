@@ -24,6 +24,7 @@ app = typer.Typer(
     help="AutoDiag: Oracle Database diagnostic assistant (ADR, traces, alert logs, diffs).",
     no_args_is_help=True,
     add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 app.add_typer(cmds_target.app, name="targets")
 app.add_typer(cmds_adr.app, name="adr")

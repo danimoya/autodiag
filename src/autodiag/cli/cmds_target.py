@@ -6,7 +6,10 @@ app = typer.Typer(help="Target inventory (databases AutoDiag may reach).")
 
 
 @app.command("list")
-def list_targets(as_json: bool = typer.Option(False, "--json")) -> None:
+def list_targets(
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+) -> None:
+    """List the configured targets (from the targets file)."""
     inv = common.inventory()
     rows = [
         [
@@ -27,7 +30,11 @@ def list_targets(as_json: bool = typer.Option(False, "--json")) -> None:
 
 
 @app.command("show")
-def show_target(name: str, as_json: bool = typer.Option(False, "--json")) -> None:
+def show_target(
+    name: str = typer.Argument(..., help="Target name."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
+) -> None:
+    """Show one target: nodes, SSH aliases, ADR base and homes, allowed roots."""
     t = common.target(name)
     lines = [f"{t.name}: {t.kind.value} on {t.platform.value}, version {t.oracle_version or '-'}"]
     lines += [f"  node {n.host} ssh={n.ssh_target} instance={n.instance or '-'}" for n in t.nodes]

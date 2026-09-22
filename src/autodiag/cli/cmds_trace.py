@@ -11,8 +11,10 @@ app = typer.Typer(help="Parse and summarise trace files (local paths).")
 
 @app.command("parse")
 def parse(
-    path: Path = typer.Argument(..., exists=True), as_json: bool = typer.Option(False, "--json")
+    path: Path = typer.Argument(..., exists=True, help="Local trace file."),
+    as_json: bool = typer.Option(False, "--json", help="Emit the parsed document as JSON."),
 ) -> None:
+    """Detect the trace kind (incident, 10046, 10053, deadlock, hang, errorstack) and summarise."""
     doc = parse_trace(path.read_text(errors="replace"))
     h = doc.header
     lines = [
@@ -59,10 +61,11 @@ def parse(
 
 @app.command("profile")
 def profile(
-    path: Path = typer.Argument(..., exists=True),
-    top: int = typer.Option(10, "--top"),
-    as_json: bool = typer.Option(False, "--json"),
+    path: Path = typer.Argument(..., exists=True, help="Local 10046 trace file."),
+    top: int = typer.Option(10, "--top", help="Cursors to show, by elapsed time."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Aggregate a 10046 SQL trace like tkprof: per-cursor calls, elapsed, I/O, plans, waits."""
     prof = parse_sqltrace(path.read_text(errors="replace"))
     t = prof.totals
     lines = [

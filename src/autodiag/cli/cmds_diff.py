@@ -17,10 +17,11 @@ app = typer.Typer(help="Compare anomaly vs normal: call stacks, 10046 profiles, 
 
 @app.command("stacks")
 def stacks(
-    left: Path = typer.Argument(..., exists=True),
-    right: Path = typer.Argument(..., exists=True),
-    as_json: bool = typer.Option(False, "--json"),
+    left: Path = typer.Argument(..., exists=True, help="Incident trace (e.g. the anomaly)."),
+    right: Path = typer.Argument(..., exists=True, help="Incident trace (e.g. the baseline)."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Align the call stacks of two incident traces and show where they diverge."""
     a = stack_from_incident(parse_incident(left.read_text(errors="replace")))
     b = stack_from_incident(parse_incident(right.read_text(errors="replace")))
     d = compare_stacks(a.frames, b.frames)
@@ -41,11 +42,12 @@ def stacks(
 
 @app.command("sqltrace")
 def sqltrace(
-    normal: Path = typer.Argument(..., exists=True),
-    anomaly: Path = typer.Argument(..., exists=True),
-    top: int = typer.Option(10, "--top"),
-    as_json: bool = typer.Option(False, "--json"),
+    normal: Path = typer.Argument(..., exists=True, help="10046 trace of the good run."),
+    anomaly: Path = typer.Argument(..., exists=True, help="10046 trace of the bad run."),
+    top: int = typer.Option(10, "--top", help="Statements to show, by elapsed delta."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Compare two 10046 profiles per sql_id: elapsed and I/O ratios, plan changes, waits."""
     n = parse_sqltrace(normal.read_text(errors="replace"))
     a = parse_sqltrace(anomaly.read_text(errors="replace"))
     d = compare_profiles(n, a, top=top)
@@ -100,15 +102,16 @@ def sqltrace(
 
 @app.command("alertrate")
 def alertrate(
-    log_a: Path = typer.Argument(..., exists=True),
-    log_b: Path = typer.Argument(..., exists=True),
+    log_a: Path = typer.Argument(..., exists=True, help="Alert log of the reference period."),
+    log_b: Path = typer.Argument(..., exists=True, help="Alert log of the period under review."),
     split: str = typer.Option(
         None, "--split", help="Split time (ISO 8601, offset optional) when both paths are one file"
     ),
-    hours_a: float = typer.Option(None, "--hours-a"),
-    hours_b: float = typer.Option(None, "--hours-b"),
-    as_json: bool = typer.Option(False, "--json"),
+    hours_a: float = typer.Option(None, "--hours-a", help="Span of A in hours (default: auto)."),
+    hours_b: float = typer.Option(None, "--hours-b", help="Span of B in hours (default: auto)."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Compare alert-log message rates between two logs, or one log split at --split."""
     ra = parse_alert_text(log_a.read_text(errors="replace"))
     rb = parse_alert_text(log_b.read_text(errors="replace"))
     if split is not None:

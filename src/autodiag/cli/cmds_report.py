@@ -12,12 +12,13 @@ app = typer.Typer(help="Render DBA and Service Request reports for a case.")
 @app.command("render")
 def render(
     case_id: str,
-    kind: str = typer.Option("dba", "--kind"),
-    out: Path = typer.Option(None, "--out"),
+    kind: str = typer.Option("dba", "--kind", help="dba or sr (Service Request)."),
+    out: Path = typer.Option(None, "--out", help="Write the Markdown here (default: stdout)."),
     capture_env: bool = typer.Option(
         False, "--env", help="Query the target for version/patches/parameters"
     ),
 ) -> None:
+    """Render a 'dba' or 'sr' report from the case's evidence and findings; store and print."""
     s = common.settings()
     st = common.store(s)
     case = st.get_case(case_id)
@@ -42,10 +43,12 @@ def render(
 
 @app.command("list")
 def list_reports(case_id: str) -> None:
+    """List the reports rendered for a case."""
     for r in common.store().list_reports(case_id):
         typer.echo(f"{r.id}  {r.kind}  {common.fmt_ts(r.rendered_at)}  {len(r.markdown)} chars")
 
 
 @app.command("show")
 def show_report(report_id: str) -> None:
+    """Print a stored report as Markdown."""
     typer.echo(common.store().get_report(report_id).markdown)

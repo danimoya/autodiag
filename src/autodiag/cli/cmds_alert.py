@@ -12,11 +12,12 @@ app = typer.Typer(help="Alert log: grep with context, statistics, fetch.")
 
 @app.command("grep")
 def grep(
-    pattern: str = typer.Argument(...),
-    target: str = typer.Option(..., "--target", "-t"),
-    context: int = typer.Option(3, "-C", "--context"),
-    max_lines: int = typer.Option(200, "--max-lines"),
+    pattern: str = typer.Argument(..., help="Fixed string to search for (grep -F)."),
+    target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
+    context: int = typer.Option(3, "-C", "--context", help="Context lines around a match."),
+    max_lines: int = typer.Option(200, "--max-lines", help="Stop after this many lines."),
 ) -> None:
+    """Search the alert log in place on the primary node (remote grep, nothing copied)."""
     src = common.source(common.target(target))
     node, home = src.primary_ref()
     out = src.grep_file(
@@ -27,11 +28,12 @@ def grep(
 
 @app.command("stats")
 def stats(
-    target: str = typer.Option(..., "--target", "-t"),
-    hours: float = typer.Option(24.0, "--hours"),
-    top: int = typer.Option(20, "--top"),
-    as_json: bool = typer.Option(False, "--json"),
+    target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
+    hours: float = typer.Option(24.0, "--hours", help="Window ending now, in hours."),
+    top: int = typer.Option(20, "--top", help="Number of top message signatures."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Summarise the last N hours of the alert log: ORA counts, top signatures, lifecycle."""
     s = common.settings()
     t = common.target(target, s)
     src = common.source(t, s)

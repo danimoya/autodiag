@@ -10,10 +10,11 @@ app = typer.Typer(help="ADR problems, incidents and files (via adrci over SSH)."
 
 @app.command("problems")
 def problems(
-    target: str = typer.Option(..., "--target", "-t"),
-    days: int = typer.Option(7, "--days"),
-    as_json: bool = typer.Option(False, "--json"),
+    target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
+    days: int = typer.Option(7, "--days", help="Look back this many days."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
 ) -> None:
+    """List ADR problems of the last N days (adrci 'show problem' over SSH)."""
     src = common.source(common.target(target))
     rows = src.list_problems(days=days)
     common.emit(
@@ -37,11 +38,14 @@ def problems(
 
 @app.command("incidents")
 def incidents(
-    target: str = typer.Option(..., "--target", "-t"),
-    problem_key: str = typer.Option(None, "--problem-key", "-k"),
-    problem_id: int = typer.Option(None, "--problem-id", "-p"),
-    as_json: bool = typer.Option(False, "--json"),
+    target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
+    problem_key: str = typer.Option(
+        None, "--problem-key", "-k", help="Problem key as printed by 'adr problems'."
+    ),
+    problem_id: int = typer.Option(None, "--problem-id", "-p", help="ADR problem id."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
 ) -> None:
+    """List the incidents of one problem, selected by --problem-id or --problem-key."""
     if problem_key is None and problem_id is None:
         typer.echo("give --problem-id or --problem-key", err=True)
         raise typer.Exit(code=1)
@@ -62,13 +66,14 @@ def incidents(
 
 @app.command("incident")
 def incident(
-    target: str = typer.Option(..., "--target", "-t"),
-    incident_id: int = typer.Option(..., "--id"),
+    target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
+    incident_id: int = typer.Option(..., "--id", help="ADR incident id."),
     fetch: bool = typer.Option(
         False, "--fetch", help="Fetch the incident trace into the cache and summarise it"
     ),
-    as_json: bool = typer.Option(False, "--json"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
+    """Show one incident; with --fetch, download its trace into the cache and summarise it."""
     s = common.settings()
     t = common.target(target, s)
     src = common.source(t, s)
@@ -101,11 +106,12 @@ def incident(
 
 @app.command("fetch")
 def fetch_file(
-    target: str = typer.Option(..., "--target", "-t"),
+    target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
     path: str = typer.Argument(..., help="Absolute remote path under the target's diagnostic root"),
     out: Path = typer.Option(None, "--out", help="Destination file (default: cache dir)"),
     node: str = typer.Option(None, "--node", help="Node host (default: first node)"),
 ) -> None:
+    """Copy one remote file under the target's diagnostic root to the cache (or --out)."""
     s = common.settings()
     t = common.target(target, s)
     n = next((x for x in t.nodes if x.host == node), t.nodes[0]) if node else t.nodes[0]
