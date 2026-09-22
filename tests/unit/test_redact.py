@@ -30,10 +30,8 @@ def test_paths_and_ora_lines_are_kept() -> None:
 
 
 def test_versions_are_not_mistaken_for_ips() -> None:
-    out = redact_for_llm("Version 23.26.3.0.0 on 19.0.0.0 from 10.0.0.5 and 192.168.1.10.")
-    assert (
-        "23.26.3.0.0" in out and "19.0.0.0" not in out.replace("<ip>", "") or "23.26.3.0.0" in out
-    )
+    out = redact_for_llm("Version 23.26.3.0.0 from 10.0.0.5 and 192.168.1.10.")
+    assert "23.26.3.0.0" in out
     assert "10.0.0.5" not in out and "192.168.1.10" not in out
 
 

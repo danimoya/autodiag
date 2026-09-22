@@ -12,7 +12,7 @@ import re
 _BIND_VALUE = re.compile(r"(^|[\s:])(value=)\S*", re.MULTILINE)
 _STR_LITERAL = re.compile(r"'(?:[^'\\]|\\.|'')*'")
 # four dotted octets not embedded in a longer dotted number (23.26.3.0.0 is a version)
-_IPV4 = re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])")
+_IPV4 = re.compile(r"(?<!\d)(?<!\d\.)(?:\d{1,3}\.){3}\d{1,3}(?!\.?\d)")
 _EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")
 _HOST = re.compile(r"\b(?<![/\w.-])([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)\b(?![/\w])")
 _KEEP_SUFFIXES = (".trc", ".trm", ".log", ".xml", ".sql", ".ora", ".dbf")
