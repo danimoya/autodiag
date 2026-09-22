@@ -47,3 +47,4 @@ retention, scheduled scans with notifications, golden evals) are in place.
   proofs, rules fallback. Pending refinements: tune `severity_rules.yaml` on real ExaCC
   alert logs (19c wording), per-target rule overrides, asynchronous diagnosis in the web
   UI, ASH time-zone alignment, a `diagnose sql` mode for 10046 pairs.
+- Alert-log fetch is capped at the first 64 MiB; read the tail (or use `adrci_show_alert_tail`) for huge unrotated logs.
