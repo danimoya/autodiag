@@ -25,6 +25,9 @@ GRANT READ ON sys.dba_hist_sql_plan            TO c##autodiag CONTAINER=ALL;
 GRANT READ ON sys.dba_hist_system_event        TO c##autodiag CONTAINER=ALL;
 GRANT READ ON sys.dba_hist_active_sess_history TO c##autodiag CONTAINER=ALL;
 GRANT READ ON sys.dba_registry_sqlpatch        TO c##autodiag CONTAINER=ALL;
+-- Container-data views (V$PDBS, V$DIAG_INCIDENT, V$SESSION ...) show only the root's
+-- rows to a common user unless it may see all containers' data:
+ALTER USER c##autodiag SET CONTAINER_DATA = ALL CONTAINER = CURRENT;
 
 ALTER SESSION SET CONTAINER = FREEPDB1;
 CREATE USER autodiag_test IDENTIFIED BY "&test_pwd"

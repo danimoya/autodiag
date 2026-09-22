@@ -34,6 +34,9 @@ GRANT READ ON sys.v_$diag_info, sys.v_$diag_problem, sys.v_$diag_incident,
               sys.dba_hist_sql_plan, sys.dba_hist_system_event,
               sys.dba_hist_active_sess_history, sys.dba_registry_sqlpatch
    TO c##autodiag CONTAINER=ALL;
+-- Without this, container-data views (V$PDBS, V$DIAG_INCIDENT, V$SESSION, ASH ...)
+-- show a common user only the root container's rows:
+ALTER USER c##autodiag SET CONTAINER_DATA = ALL CONTAINER = CURRENT;
 ```
 
 `V$ACTIVE_SESSION_HISTORY` and `DBA_HIST_*` require the Diagnostics Pack
