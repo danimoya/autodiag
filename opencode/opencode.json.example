@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/qwen3:27b",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama",
+      "options": { "baseURL": "http://ollama.example.internal:11434/v1" },
+      "models": { "qwen3:27b": { "name": "Qwen3 27B (num_ctx >= 32768 on the Ollama side)" } }
+    }
+  },
+  "mcp": {
+    "autodiag": {
+      "type": "local",
+      "command": ["autodiag", "mcp", "stdio"],
+      "environment": { "AUTODIAG_CONFIG": "~/.config/autodiag/config.toml" },
+      "enabled": true,
+      "timeout": 15000
+    }
+  },
+  "_shared_service_alternative": {
+    "mcp": {
+      "autodiag": {
+        "type": "remote",
+        "url": "http://127.0.0.1:8790/mcp",
+        "headers": { "Authorization": "Bearer ${AUTODIAG_MCP_TOKEN}" },
+        "enabled": true
+      }
+    }
+  }
+}
