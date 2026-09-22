@@ -48,7 +48,8 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/autodiag/cli/*" = ["B008"]  # typer.Option/Argument defaults are the typer idiom
-"src/autodiag/mcp/server.py" = ["E501"]  # dense tool payload literals; readability over width
+"src/autodiag/mcp/server.py" = ["E501"]
+"src/autodiag/web/app.py" = ["E501", "B008"]  # dense tool payload literals; readability over width
 
 [build-system]
 requires = ["setuptools>=68"]

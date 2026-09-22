@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}Problems - {{ t.name }}{% endblock %}{% block content %}
+<h1>ADR problems on {{ t.name }} <span class="muted">last {{ days }} days</span></h1>
+<form method="get"><label>days <input name="days" value="{{ days }}" size="4"></label> <button>refresh</button></form>
+<table><tr><th>id</th><th>problem key</th><th>last incident</th><th>last time</th><th>instance</th><th></th></tr>
+{% for p in problems %}<tr><td>{{ p.problem_id }}</td><td><a href="/targets/{{ t.name }}/problems/{{ p.problem_id }}">{{ p.problem_key }}</a></td><td>{{ p.last_incident or '-' }}</td><td>{{ p.lastinc_time | ts }}</td><td>{{ p.instance or p.node }}</td>
+<td><form class="inline" method="post" action="/targets/{{ t.name }}/problems/{{ p.problem_id }}/triage"><input type="hidden" name="problem_key" value="{{ p.problem_key }}"><button>triage</button></form></td></tr>
+{% else %}<tr><td colspan="6" class="muted">no problems in the window</td></tr>{% endfor %}</table>
+{% endblock %}

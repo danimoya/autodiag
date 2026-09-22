@@ -15,6 +15,7 @@ from autodiag.cli import (
     cmds_serve,
     cmds_target,
     cmds_trace,
+    cmds_web,
 )
 
 app = typer.Typer(
@@ -32,6 +33,7 @@ app.add_typer(cmds_case.app, name="case")
 app.add_typer(cmds_report.app, name="report")
 app.add_typer(cmds_kb.app, name="kb")
 app.add_typer(cmds_serve.app, name="mcp")
+app.add_typer(cmds_web.app, name="serve")
 
 
 def _version_callback(value: bool) -> None:

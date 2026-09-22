@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}Cases - AutoDiag{% endblock %}{% block content %}
+<h1>Cases</h1>
+<form method="post" action="/cases"><select name="target">{% for t in targets %}<option>{{ t.name }}</option>{% endfor %}</select> <input name="title" placeholder="title" size="40" required> <input name="problem_keys" placeholder="problem keys, comma separated" size="40"> <button>open case</button></form>
+<table><tr><th>id</th><th>target</th><th>status</th><th>created</th><th>title</th><th>problem keys</th></tr>
+{% for c in cases %}<tr><td><a href="/cases/{{ c.id }}">{{ c.id }}</a></td><td>{{ c.target }}</td><td>{{ c.status }}</td><td>{{ c.created_at | ts }}</td><td>{{ c.title }}</td><td>{{ c.problem_keys | join(', ') }}</td></tr>{% else %}<tr><td colspan="6" class="muted">no cases yet</td></tr>{% endfor %}</table>
+{% endblock %}

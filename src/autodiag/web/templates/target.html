@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}{{ t.name }} - AutoDiag{% endblock %}{% block content %}
+<h1>{{ t.name }} <span class="muted">{{ t.kind.value }} / {{ t.platform.value }} / {{ t.oracle_version or '-' }}</span></h1>
+<p><a href="/targets/{{ t.name }}/problems">ADR problems</a> · <a href="/targets/{{ t.name }}/alertlog">Alert log</a> · <a href="/cases?target={{ t.name }}">Cases</a></p>
+<h2>Nodes</h2>
+<table><tr><th>host</th><th>ssh</th><th>instance</th><th>ORACLE_HOME</th></tr>
+{% for n in t.nodes %}<tr><td>{{ n.host }}</td><td>{{ n.ssh_target }}</td><td>{{ n.instance or '-' }}</td><td>{{ n.oracle_home or '-' }}</td></tr>{% endfor %}</table>
+<p>ADR base <code>{{ t.adr_base }}</code>; homes {% for h in t.adr_homes %}<code>{{ h }}</code> {% endfor %}; allowed roots {% for r in t.allowed_roots %}<code>{{ r }}</code> {% endfor %}</p>
+<h2>Baselines</h2>
+<table><tr><th>id</th><th>kind</th><th>artifact</th><th>label</th><th>created</th></tr>
+{% for b in baselines %}<tr><td>{{ b.id }}</td><td>{{ b.kind }}</td><td><a href="/artifacts/{{ b.artifact_id }}">{{ b.artifact_id }}</a></td><td>{{ b.label }}</td><td>{{ b.created_at | ts }}</td></tr>{% else %}<tr><td colspan="5" class="muted">none</td></tr>{% endfor %}</table>
+<h2>Cases</h2>
+<ul>{% for c in cases %}<li><a href="/cases/{{ c.id }}">{{ c.id }}</a> [{{ c.status }}] {{ c.title }}</li>{% else %}<li class="muted">none</li>{% endfor %}</ul>
+{% endblock %}

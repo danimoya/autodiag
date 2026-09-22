@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block title %}{{ r.id }} - AutoDiag{% endblock %}{% block content %}
+<p><a href="/cases/{{ r.case_id }}">← case</a> · <a href="/reports/{{ r.id }}.md">download Markdown</a> · <span class="muted">{{ r.kind }} rendered {{ r.rendered_at | ts }}</span></p>
+{{ body | safe }}
+{% endblock %}

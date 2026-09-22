@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}Incidents - {{ t.name }}{% endblock %}{% block content %}
+<h1>Incidents of problem {{ problem_id }} on {{ t.name }}</h1>
+<table><tr><th>incident</th><th>problem key</th><th>created</th><th>error</th><th>args</th><th>flood controlled</th></tr>
+{% for i in incidents %}<tr><td>{{ i.incident_id }}</td><td>{{ i.problem_key }}</td><td>{{ i.create_time | ts }}</td><td>{% if i.error_number %}{{ i.error_facility }}-{{ i.error_number }}{% endif %}</td><td>{{ i.error_args | join(', ') }}</td><td>{{ i.flood_controlled }}</td></tr>
+{% else %}<tr><td colspan="6" class="muted">none</td></tr>{% endfor %}</table>
+<p class="muted">Use the CLI (<code>autodiag case collect-incident</code>) or the MCP tool <code>get_incident</code> to fetch an incident trace into a case.</p>
+{% endblock %}

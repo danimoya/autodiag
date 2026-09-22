@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block title %}{{ c.id }} - AutoDiag{% endblock %}{% block content %}
+<h1>{{ c.title }} <span class="muted">{{ c.id }} · {{ c.target }} · {{ c.status }}</span></h1>
+<p>Problem keys: {% for k in c.problem_keys %}<code>{{ k }}</code> {% else %}<span class="muted">none</span>{% endfor %}</p>
+<p><form class="inline" method="post" action="/cases/{{ c.id }}/reports"><select name="kind"><option value="dba">DBA report</option><option value="sr">SR draft</option></select> <label><input type="checkbox" name="capture_env" value="true"> capture environment</label> <button>render</button></form>
+{% if c.status == 'open' %}<form class="inline" method="post" action="/cases/{{ c.id }}/close"><button>close case</button></form>{% endif %}</p>
+<div class="row"><div class="col">
+<h2>Artifacts</h2>
+<table><tr><th>id</th><th>kind</th><th>file</th><th>size</th><th>baseline</th></tr>
+{% for a in artifacts %}<tr><td><a href="/artifacts/{{ a.id }}">{{ a.id }}</a></td><td>{{ a.kind }}</td><td>{{ a.path.rsplit('/', 1)[-1] }}</td><td>{{ a.size }}</td>
+<td><form class="inline" method="post" action="/cases/{{ c.id }}/baselines"><input type="hidden" name="artifact_id" value="{{ a.id }}"><input type="hidden" name="kind" value="{{ a.kind }}"><button>set</button></form></td></tr>{% else %}<tr><td colspan="5" class="muted">none</td></tr>{% endfor %}</table>
+<form method="post" action="/cases/{{ c.id }}/upload" enctype="multipart/form-data"><input type="file" name="file" required> <select name="kind"><option>trace</option><option>incident_trace</option><option>sqltrace</option><option>alert_log</option><option>ips_package</option><option>other</option></select> <button>upload</button></form>
+{% if artifacts | length >= 2 %}<p class="muted">Compare: <a href="/diff/stacks?left={{ artifacts[0].id }}&right={{ artifacts[1].id }}">call stacks</a> · <a href="/diff/sqlprofile?left={{ artifacts[0].id }}&right={{ artifacts[1].id }}">10046 profiles</a> (first two artifacts; edit the URL for others)</p>{% endif %}
+<h2>Evidence</h2>
+<table><tr><th>id</th><th>tool</th><th>summary</th></tr>
+{% for e in evidence %}<tr><td>{{ e.id }}</td><td>{{ e.tool }}{% if e.artifact_id %} <a href="/artifacts/{{ e.artifact_id }}">{{ e.artifact_id }}</a>{% endif %}</td><td>{{ e.summary }}</td></tr>{% else %}<tr><td colspan="3" class="muted">none</td></tr>{% endfor %}</table>
+<form method="post" action="/cases/{{ c.id }}/evidence"><input name="summary" placeholder="manual evidence note" size="60" required> <input type="hidden" name="tool" value="manual"> <button>add</button></form>
+</div><div class="col">
+<h2>Findings</h2>
+{% for f in findings %}<div><strong>{{ f.title }}</strong> <span class="tag">{{ f.kind }}</span> <span class="tag">{{ f.confidence | pct }}</span> <span class="tag">{{ f.status }}</span> <span class="muted">{{ f.author }}</span>
+<p>{{ f.detail }}<br><span class="muted">evidence: {{ f.evidence_ids | join(', ') }}{% if f.kb_refs %} · kb: {{ f.kb_refs | join(', ') }}{% endif %}</span></p>
+<form class="inline" method="post" action="/cases/{{ c.id }}/findings/{{ f.id }}"><select name="status"><option {% if f.status == 'proposed' %}selected{% endif %}>proposed</option><option {% if f.status == 'confirmed' %}selected{% endif %}>confirmed</option><option {% if f.status == 'rejected' %}selected{% endif %}>rejected</option></select> <input name="confidence" value="{{ f.confidence }}" size="4"> <button>update</button></form></div>
+{% else %}<p class="muted">none</p>{% endfor %}
+<h3>Add finding</h3>
+<form method="post" action="/cases/{{ c.id }}/findings"><select name="kind"><option>root_cause</option><option>contributing</option><option>observation</option><option>action</option></select> <input name="title" placeholder="title" size="40" required><br><textarea name="detail" rows="3" cols="60" placeholder="detail"></textarea><br>confidence <input name="confidence" value="0.5" size="4"> evidence ids <input name="evidence_ids" placeholder="ev_..., ev_..." size="30" required> <button>add finding</button></form>
+<h2>Reports</h2>
+<ul>{% for r in reports %}<li><a href="/reports/{{ r.id }}">{{ r.id }}</a> {{ r.kind }} {{ r.rendered_at | ts }} (<a href="/reports/{{ r.id }}.md">download</a>)</li>{% else %}<li class="muted">none</li>{% endfor %}</ul>
+</div></div>
+{% endblock %}

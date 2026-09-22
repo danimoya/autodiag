@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block title %}10046 diff - AutoDiag{% endblock %}{% block content %}
+<h1>10046 profile comparison</h1>
+<p>Normal <a href="/artifacts/{{ a.id }}">{{ a.id }}</a> · Anomaly <a href="/artifacts/{{ b.id }}">{{ b.id }}</a></p>
+<p>{{ d.summary }}</p>
+<table><tr><th>sql_id</th><th>in</th><th>exec n/a</th><th>elapsed n/a</th><th>ratio</th><th>cr n/a</th><th>ratio</th><th>plan</th><th>tags</th><th>sql</th></tr>
+{% for it in d.items %}<tr><td>{{ it.sql_id }}</td><td>{{ it.present_in }}</td><td>{{ it.left.exec_count }} / {{ it.right.exec_count }}</td><td>{{ it.left.elapsed_us | us }} / {{ it.right.elapsed_us | us }}</td><td>x{{ it.ratio_elapsed }}</td><td>{{ it.left.query }} / {{ it.right.query }}</td><td>x{{ it.ratio_query }}</td><td>{% if it.plan_change %}<span class="warn">{{ it.left_plan_hashes }} → {{ it.right_plan_hashes }}</span>{% endif %}</td><td>{% for t in it.tags %}<span class="tag">{{ t }}</span>{% endfor %}</td><td><code>{{ it.sql_text[:80] }}</code></td></tr>{% endfor %}</table>
+<h2>Wait deltas</h2>
+<table><tr><th>event</th><th>normal</th><th>anomaly</th><th></th></tr>
+{% for w in d.wait_deltas %}<tr><td>{{ w.event }}</td><td>{{ w.left.total_ela_us | us }} ({{ w.left.count }})</td><td>{{ w.right.total_ela_us | us }} ({{ w.right.count }})</td><td>{% if w.new_in_right %}<span class="warn">new</span>{% elif w.gone_in_right %}gone{% endif %}</td></tr>{% endfor %}</table>
+<h2>Hints</h2><ul>{% for h in d.explanation_hints %}<li>{{ h }}</li>{% else %}<li class="muted">none</li>{% endfor %}</ul>
+{% endblock %}

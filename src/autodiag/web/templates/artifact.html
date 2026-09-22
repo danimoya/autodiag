@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}{{ a.id }} - AutoDiag{% endblock %}{% block content %}
+<h1>{{ a.path.rsplit('/', 1)[-1] }} <span class="muted">{{ a.id }} · {{ a.kind }} · {{ a.size }} bytes</span></h1>
+<p><a href="/cases/{{ a.case_id }}">← case</a> · <a href="/artifacts/{{ a.id }}/lines?offset=0&n={{ n }}">raw lines</a> · <a href="/artifacts/{{ a.id }}/raw">raw file</a> · kind <strong>{{ doc.kind.value }}</strong>, {{ doc.line_count }} lines, Oracle {{ doc.header.oracle_version }}, instance {{ doc.header.instance_name }}, session {{ doc.header.session_id }}.{{ doc.header.session_serial }}, module {{ doc.header.module }}</p>
+{% if summary %}<h2>Summary</h2><ul>{% for s in summary %}<li>{{ s }}</li>{% endfor %}</ul>{% endif %}
+{% if doc.ora_lines %}<h2>ORA lines</h2><pre>{{ doc.ora_lines | join('\n') }}</pre>{% endif %}
+{% if is_incident and doc.context_frames %}<h2>Context frames</h2><pre>{% for c in doc.context_frames %}[{{ '%02d' % c.index }}] {{ c.func }} [{{ c.component }}]{% if c.signaling %}  <-- signaling{% endif %}
+{% endfor %}</pre>{% endif %}
+{% if is_incident and doc.call_stack %}<h2>Call stack ({{ doc.call_stack.frames | length }} frames)</h2><pre>{% for f in doc.call_stack.frames[:60] %}{{ f.func }}(){% if f.offset is not none %}+{{ f.offset }}{% endif %}  {{ f.call_type or '' }}  {{ f.entry or '' }}
+{% endfor %}{% if doc.call_stack.frames | length > 60 %}...
+{% endif %}</pre>{% endif %}
+<h2>Sections</h2>
+<table><tr><th>kind</th><th>title</th><th>lines</th></tr>{% for s in doc.sections %}<tr><td>{{ s.kind }}</td><td><code>{{ s.title }}</code></td><td><a href="/artifacts/{{ a.id }}/lines?offset={{ s.start_line - 1 }}&n=120">{{ s.start_line }}{% if s.end_line > s.start_line %}-{{ s.end_line }}{% endif %}</a></td></tr>{% else %}<tr><td colspan="3" class="muted">none</td></tr>{% endfor %}</table>
+<h2>Parsed data</h2><pre>{{ extra | json }}</pre>
+{% endblock %}

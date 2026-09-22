@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}AutoDiag{% endblock %}</title>
+<style>
+  :root { --bg:#fbfbfa; --fg:#1d1d1b; --muted:#6b6b66; --line:#dcdcd7; --accent:#0b5d8a; --warn:#a6461b; --ok:#2f7d4a; --code:#f1f1ee; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --fg:#e8e8e3; --muted:#9a9a93; --line:#33332f; --accent:#6db3e0; --warn:#e58a5c; --ok:#7dc28f; --code:#22221f; } }
+  body { margin:0; font: 15px/1.45 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  header { display:flex; gap:1.2rem; align-items:baseline; padding:.7rem 1rem; border-bottom:1px solid var(--line); }
+  header a { color:var(--fg); text-decoration:none; } header a.brand { font-weight:700; color:var(--accent); }
+  main { padding: 1rem; max-width: 1400px; margin: 0 auto; }
+  table { border-collapse: collapse; width:100%; margin:.5rem 0 1rem; } th, td { text-align:left; padding:.3rem .5rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; font-size:.85em; }
+  code, pre { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; } pre { background:var(--code); padding:.6rem; overflow:auto; border-radius:4px; }
+  .muted { color:var(--muted); } .warn { color:var(--warn); } .ok { color:var(--ok); } .tag { display:inline-block; padding:0 .4em; border:1px solid var(--line); border-radius:3px; font-size:.8em; margin-right:.2em; }
+  form.inline { display:inline; } input, select, textarea, button { font: inherit; padding:.25rem .4rem; border:1px solid var(--line); border-radius:3px; background:var(--bg); color:var(--fg); }
+  button { cursor:pointer; background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row { display:flex; gap:1rem; flex-wrap:wrap; } .col { flex:1 1 420px; } h2 { margin:1.2rem 0 .4rem; } h3 { margin:1rem 0 .3rem; }
+  .eq { color:var(--muted); } .replace, .delete, .insert { color:var(--warn); font-weight:600; }
+</style>
+</head>
+<body>
+<header><a class="brand" href="/">AutoDiag</a><a href="/cases">Cases</a><a href="/targets">Targets</a><a href="/api/docs">API</a><span class="muted">v{{ version }}</span></header>
+<main>{% block content %}{% endblock %}</main>
+</body>
+</html>

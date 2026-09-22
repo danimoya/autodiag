@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block title %}Targets - AutoDiag{% endblock %}{% block content %}
+<h1>Targets</h1>
+<table><tr><th>name</th><th>kind</th><th>platform</th><th>version</th><th>nodes</th><th>SQL*Net</th></tr>
+{% for t in targets %}<tr><td><a href="/targets/{{ t.name }}">{{ t.name }}</a></td><td>{{ t.kind.value }}</td><td>{{ t.platform.value }}</td><td>{{ t.oracle_version or '-' }}</td><td>{{ t.nodes | map(attribute='host') | join(', ') }}</td><td>{{ 'yes' if t.sqlnet else 'no' }}</td></tr>{% endfor %}
+</table>{% endblock %}

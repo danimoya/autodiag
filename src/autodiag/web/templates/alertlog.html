@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% block title %}Alert log - {{ t.name }}{% endblock %}{% block content %}
+<h1>Alert log on {{ t.name }} <span class="muted">last {{ hours }} h</span></h1>
+<form method="get"><label>hours <input name="hours" value="{{ hours }}" size="6"></label> <label>grep <input name="grep" value="{{ grep }}" size="30"></label> <label>context <input name="context" value="{{ context }}" size="3"></label> <button>apply</button></form>
+<div class="row"><div class="col">
+<h2>Statistics</h2>
+<p>{{ stats.record_count }} entries between {{ stats.first_ts | ts }} and {{ stats.last_ts | ts }}; {{ stats.incident_count }} incidents.</p>
+<table><tr><th>ORA code</th><th>count</th></tr>{% for c, n in stats.ora_counts | dictsort(by='value', reverse=true) %}<tr><td>ORA-{{ '%05d' % c }}</td><td>{{ n }}</td></tr>{% else %}<tr><td colspan="2" class="muted">none</td></tr>{% endfor %}</table>
+<h3>Top signatures</h3>
+<table><tr><th>count</th><th>signature</th></tr>{% for sig, n in stats.top_signatures %}<tr><td>{{ n }}</td><td><code>{{ sig }}</code></td></tr>{% endfor %}</table>
+<h3>Lifecycle events</h3>
+<ul>{% for e in stats.lifecycle_events[-20:] %}<li><span class="muted">{{ e.ts | ts }}</span> {{ e.text }}</li>{% endfor %}</ul>
+</div><div class="col">
+<h2>Grep results{% if grep %} for <code>{{ grep }}</code>{% endif %}</h2>
+{% for h in hits %}<pre>{% for b in h.before %}{{ b }}
+{% endfor %}<strong>{{ h.line_no }}: {{ h.line }}</strong>
+{% for a in h.after %}{{ a }}
+{% endfor %}</pre>{% else %}<p class="muted">{{ 'no match' if grep else 'enter a pattern' }}</p>{% endfor %}
+</div></div>
+{% endblock %}

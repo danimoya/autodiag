@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}{{ a.id }} lines - AutoDiag{% endblock %}{% block content %}
+<p><a href="/artifacts/{{ a.id }}">← {{ a.id }}</a> · lines {{ offset + 1 }}-{{ offset + lines | length }} of {{ total }}{% if grep %} matching <code>{{ grep }}</code>{% endif %}</p>
+<form method="get"><input name="grep" value="{{ grep }}" placeholder="filter (fixed string)" size="30"> <input type="hidden" name="n" value="{{ n }}"> <button>filter</button></form>
+<p>{% if offset > 0 %}<a href="?offset={{ [offset - n, 0] | max }}&n={{ n }}&grep={{ grep }}">← previous</a>{% endif %} {% if offset + n < total %}<a href="?offset={{ offset + n }}&n={{ n }}&grep={{ grep }}">next →</a>{% endif %}</p>
+<pre>{% for ln in lines %}{% if not grep %}{{ offset + loop.index }}: {% endif %}{{ ln }}
+{% endfor %}</pre>
+{% endblock %}

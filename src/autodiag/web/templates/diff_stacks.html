@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block title %}Stack diff - AutoDiag{% endblock %}{% block content %}
+<h1>Call stack comparison</h1>
+<p>Left <a href="/artifacts/{{ a.id }}">{{ a.id }}</a> <code>{{ da.problem_key }}</code> · Right <a href="/artifacts/{{ b.id }}">{{ b.id }}</a> <code>{{ db.problem_key }}</code></p>
+<p>similarity {{ d.similarity }}, divergence at frame {{ d.divergence_index if d.divergence_index is not none else '-' }}, common prefix {{ d.common_prefix }}, common suffix {{ d.common_suffix }}</p>
+<p>left first frame <code>{{ d.left_first_app_frame }}</code> [{{ d.left_component }}] · right first frame <code>{{ d.right_first_app_frame }}</code> [{{ d.right_component }}]</p>
+<ul>{% for n in d.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+<p>unique left: {% for f in d.unique_left %}<code>{{ f }}</code> {% else %}<span class="muted">none</span>{% endfor %}<br>unique right: {% for f in d.unique_right %}<code>{{ f }}</code> {% else %}<span class="muted">none</span>{% endfor %}</p>
+<table><tr><th>#</th><th>op</th><th>left</th><th>right</th></tr>
+{% for f in d.aligned %}<tr class="{{ f.op }}"><td>{{ loop.index0 }}</td><td>{{ f.op }}</td><td><code>{{ f.left or '' }}</code></td><td><code>{{ f.right or '' }}</code></td></tr>{% endfor %}</table>
+{% endblock %}
