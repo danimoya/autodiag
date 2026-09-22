@@ -1,0 +1,226 @@
+Dump file /opt/oracle/diag/rdbms/free/FREE/incident/incdir_8347/FREE_ora_2710_i8347.trc
+Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free
+Version 23.26.3.0.0
+Build label:    RDBMS_23.26.3.0.0DBRU_LINUX.X64_260704
+ORACLE_HOME:    /opt/oracle/product/26ai/dbhomeFree
+System name:	Linux
+Node name:	oradb-test
+Release:	5.14.0-611.34.1.el9_7.x86_64
+Version:	#1 SMP PREEMPT_DYNAMIC Mon Feb 23 12:07:36 UTC 2026
+Machine:	x86_64
+CLID:	P
+Instance name: FREE
+Instance number: 1
+Database name: FREE 
+Database unique name: FREE 
+Database id: 1509902213
+Database role: PRIMARY
+Redo thread mounted by this instance: 1
+Oracle binary inode: 	9783192
+Oracle process number: 42
+Unix process pid:       2710
+             NID:       4026537473
+             created:   2026-09-22T11:54:35.2440011161+00:00
+             image:     oracle@oradb-test
+
+
+*** 2026-09-22T11:54:42.753086+00:00
+*** SESSION ID:(62.54736) 2026-09-22T11:54:42.753096+00:00
+*** CLIENT ID:() 2026-09-22T11:54:42.753105+00:00
+*** SERVICE NAME:(freepdb1) 2026-09-22T11:54:42.753114+00:00
+*** MODULE NAME:(SQL*Plus) 2026-09-22T11:54:42.753123+00:00
+*** ACTION NAME:() 2026-09-22T11:54:42.753132+00:00
+*** CLIENT DRIVER:(SQL*PLUS) 2026-09-22T11:54:42.753140+00:00
+*** CONTAINER ID:(3) 2026-09-22T11:54:42.753148+00:00
+*** CLIENT IP:(127.0.0.1) 2026-09-22T11:54:42.753157+00:00
+ 
+[TOC00000]
+Jump to table of contents
+Dump continued from file: /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_2710.trc
+[TOC00001]
+ORA-07445: exception encountered: core dump [kdxbrs1()+187] [SIGSEGV] [ADDR:0xD43100000AA2] [PC:0x194EE3EB] [unknown code (0)] []
+
+[TOC00001-END]
+[TOC00002]
+========= Dump for incident 8347 (ORA 7445 [kdxbrs1]) ========
+[TOC00003]
+----- Beginning of Customized Incident Dump(s) -----
+Dumping swap information
+Memory (Avail / Total) = 611.76M / 128784.39M
+Swap (Avail / Total) = 490.19M /  1535.99M
+Commit (AS / Limit) = 57855.28M / 65928.18M
+
+Stack (Used / Configured) = 0.08M / 32.00M
+
+Exception [type: SIGSEGV, unknown code (0)] [ADDR:0xD43100000AA2] [PC:0x194EE3EB, kdxbrs1()+187] [exception issued by pid: 2722, uid: 54321] [flags: 0x0, count: 1]
+
+Registers:
+%rax: 0x00007fce28b46fc0 %rbx: 0x00007fce28b46f80 %rcx: 0x00000000c0341f70
+%rdx: 0x00000000c034004c %rdi: 0x0000000000000001 %rsi: 0x0000000000000002
+%rsp: 0x00007ffe1b21e1e0 %rbp: 0x00007ffe1b21e230  %r8: 0x0000000000000004
+ %r9: 0x00007fce28b46fc1 %r10: 0x0000000000000002 %r11: 0x00007fce28b0dfd0
+%r12: 0x00000000c0341f6c %r13: 0x0000000000000000 %r14: 0x000000000000000a
+%r15: 0x0000000000000015 %rip: 0x00000000194ee3eb %efl: 0x0000000000000297
+  kdxbrs1()+170 (0x194ee3da) lea (%rdx,%rcx),%r12
+  kdxbrs1()+174 (0x194ee3de) movzbl (%rax),%esi
+  kdxbrs1()+177 (0x194ee3e1) lea 0x4(%rdx,%rcx),%rcx
+  kdxbrs1()+182 (0x194ee3e6) cmp 0x4(%r12),%sil
+> kdxbrs1()+187 (0x194ee3eb) jne 0x194ee43e
+  kdxbrs1()+189 (0x194ee3ed) movzwl 0x2(%rbx),%ecx
+  kdxbrs1()+193 (0x194ee3f1) mov $0x1,%esi
+  kdxbrs1()+198 (0x194ee3f6) cmp $1,%rcx
+  kdxbrs1()+202 (0x194ee3fa) jbe 0x194ee431
+
+*** 2026-09-22T11:54:42.755754+00:00
+dbkedDefDump(): Starting a non-incident diagnostic dump (flags=0x3, level=3, mask=0x0)
+[TOC00004]
+----- Current SQL Statement for this session (sql_id=2cbq3fnthp7ut) -----
+SELECT COUNT(*) FROM CUSTOMERS WHERE CUSTOMER_ID BETWEEN 1 AND 100
+[TOC00005]
+----- Parser State -----
+Parser state1: len1=0 len2=39 pos1=0 pos2=5
+Parser state2: flg=0x0 xflg=0x300000 xxflg=0x0 3xflg=0x800
+Parser state3: ptty=2718 tty=0 tlen=5
+Parser state4: vdepth=0 pdepth=0
+Parser errs: err1=0 err2=0 err3=0
+Parser string: prx=0x7fce2bcd6120 base=0x0 cur=0x7ffe1b22ea15
+[TOC00005-END]
+[TOC00006]
+----- PL/SQL Stack -----
+----- PL/SQL Call Stack -----
+  object      line  object
+  handle    number  name
+0x78c5a8b8        54  package body AUTODIAG_TEST.PKG_ORDERS.BUSY_LOOP
+0x723fc160         1  anonymous block
+[TOC00006-END]
+[TOC00004-END]
+
+[TOC00007]
+----- Call Stack Trace -----
+calling              call     entry                argument values in hex      
+location             type     point                (? means dubious value)     
+-------------------- -------- -------------------- ----------------------------
+ksedst1()+95         call     kgdsdst()            7FCE2B999FF0 000000003
+                                                   7FCE2B992470 ? 7FCE2B992610 ?
+                                                   7FCE2B999C80 ? 000000083 ?
+ksedst()+50          call     ksedst1()            000000001 000000001
+                                                   7FCE2B992470 ? 7FCE2B992610 ?
+                                                   7FCE2B999C80 ? 000000083 ?
+dbkedDefDump()+2690  call     ksedst()             000000001 000000001 ?
+0                                                  7FCE2B992470 ? 7FCE2B992610 ?
+                                                   7FCE2B999C80 ? 000000083 ?
+ksedmp()+698         call     dbkedDefDump()       000000003 000000003
+                                                   7FCE2B992470 ? 7FCE2B992610 ?
+                                                   7FCE2B999C80 ? 000000083 ?
+ssexhd()+4546        call     ksedmp()             00000044F 000000003 ?
+                                                   7FCE2B992470 ? 7FCE2B992610 ?
+                                                   7FCE2B999C80 ? 000000083 ?
+sslssSynchHdlr()+47  call     ssexhd()             00000000B 000000000
+1                                                  7FCE2B99BBF0 7FCE2B99BAC0
+                                                   7FCE2B99BA18 000000083 ?
+sslsshandler()+112   call     sslssSynchHdlr()     00000000B 7FCE2B99BBF0
+                                                   7FCE2B99BAC0 7FCE2B99BAC0 ?
+                                                   7FCE2B99BA18 ? 000000083 ?
+__sighandler()       call     sslsshandler()       00000000B 7FCE2B99BBF0
+                                                   7FCE2B99BAC0 7FCE2B99BAC0 ?
+                                                   7FCE2B99BA18 ? 000000083 ?
+kdxbrs1()+187        signal   __sighandler()       000000001 ? 000000002 ?
+                                                   0C034004C ? 0C0341F70 ?
+                                                   000000004 ? 7FCE28B46FC1 ?
+kdifkc()+156         call     kdxbrs1()            000000001 ? 000000002 ?
+                                                   0C034004C ? 0C0341F70 ?
+                                                   000000004 ? 7FCE28B46FC1 ?
+ktrexc()+1054        call     kdifkc()             000000001 ? 000000002 ?
+                                                   0C034004C ? 0C0341F70 ?
+                                                   000000004 ? 7FCE28B46FC1 ?
+kcbgtcr()+6262       call     ktrexc()             000000001 ? 7FCE2BCEC038
+                                                   000000000 0C0341F70 ?
+                                                   000001FE8 7FCE28B46FC1 ?
+ktrgtc2()+1171       call     kcbgtcr()            7FCE28B0ECD0 000000001
+                                                   000000800 000000000
+                                                   000001FE8 ? 7FCE28B46FC1 ?
+qeilbk1()+837        call     ktrgtc2()            7FCE28B0ECD0 ? 000000001 ?
+                                                   0194B4310 7FCE28B0EC18
+                                                   000000800 7FCE28B46FC1 ?
+qeilsr()+174         call     qeilbk1()            7FCE28B0ECD0 ? 7FCE28B0ECC0
+                                                   7FCE28B0E9C8 7FCE28B0E614
+                                                   000000800 ? 7FCE28B46FC1 ?
+qerixtFetch()+336    call     qeilsr()             7FCE28B0E9C8 7FCE28B0EC18
+                                                   000000000 7FCE28B0E614
+                                                   7FCE28B0ECC0 7FCE28B46FC1 ?
+qergsFetchSimple()+  call     qerixtFetch()        7FCE28B0E9C8 ? 7FCE28B0EC18 ?
+488                                                019C66B20 7FFE1B227288
+                                                   7FCE28B0ECC0 ? 7FCE28B0E268
+qergsFetch()+262     call     qergsFetchSimple()   7FCE28B0E9C8 ? 7FCE28B0EC18 ?
+                                                   01976B3C0 7FFE1B227D60
+                                                   7FCE28B0ECC0 ? 071C21BC8
+opifch2()+3460       call     qergsFetch()         7FCE28B0E9C8 ? 7FCE28B0EC18 ?
+                                                   01976B3C0 ? 7FFE1B227D60 ?
+                                                   7FCE28B0ECC0 ? 7FCE2BCFA3C0
+[... call stack continues ...]
+printing argument data : 0.039000 sec
+
+
+----- End of Call Stack Trace -----
+
+
+DDE flags: 0x0
+Heap: 0x7fce2a4a6550
+Incident Context pointer in diag: 0x7fce2a4a7a68
+Incident ID Cache: 0x7bb013c0 
+Invocation Context #: 0
+----- Invocation Context Dump -----
+Address: 0x7fce2a4a71c0
+Phase: 3
+flags: 0x10E0005
+Incident ID: 8347
+Error Descriptor: ORA-7445 [kdxbrs1] [SIGSEGV] [ADDR:0xD43100000AA2] [PC:0x194EE3EB] [unknown code (0)] [] [] [] [] [] [] []
+Error class: 0
+Problem Key # of args: 1
+Number of actions: 35
+----- Incident Context Dump -----
+Address: 0x7fce2a4a7a68
+Incident ID: 8347
+Problem Key: ORA 7445 [kdxbrs1]
+Error: ORA-7445 [kdxbrs1] [SIGSEGV] [ADDR:0xD43100000AA2] [PC:0x194EE3EB] [unknown code (0)] [] [] [] [] [] [] []
+[00]: dbgexExplicitEndInc [diag_dde]
+[01]: dbgeEndDDEInvocationImpl [diag_dde]
+[02]: ssexhd []
+[03]: sslssSynchHdlr []
+[04]: sslsshandler []
+[05]: __sighandler []
+[06]: kdxbrs1 [Data]<-- Signaling
+[07]: kdifkc [KDIF]
+[08]: ktrexc [Transactions]
+[09]: kcbgtcr [CACHE_RCV]
+[10]: ktrgtc2 [Transactions]
+[11]: qeilbk1 []
+[12]: qeilsr []
+[13]: qerixtFetch [SQL_Execution]
+[14]: qergsFetchSimple [SQL_Execution]
+[15]: qergsFetch [SQL_Execution]
+[16]: opifch2 [OPI]
+[17]: opiefn0 [OPI]
+[18]: opipls [OPI]
+[19]: opiodr [OPI]
+[20]: rpidrus [RPI]
+[21]: skgmstack []
+[22]: rpidru [RPI]
+[23]: rpiswu2 [RPI]
+[24]: rpidrv [RPI]
+[25]: psddr0 [PROGINT_PLSQL]
+[26]: psdnal [PROGINT_PLSQL]
+[27]: pevm_EXECC [PLSQL_Code_Execution]
+[28]: pfrinstr_EXECC [PLSQL_Code_Execution]
+[29]: pfrrun_no_tool [PLSQL_Code_Execution]
+[30]: pfrrun [PLSQL_Code_Execution]
+[31]: plsql_run [PLSQL_PSD_Standalones]
+[32]: peicnt [PLSQL_Code_Execution]
+[33]: kkxexe [PROGINT_PLSQL]
+[34]: opiexe [Time_Limit]
+[35]: kpoal8 [PROGINT_MISC]
+[36]: opiodr [OPI]
+[37]: ttcpip []
+[38]: opitsk [OPI]
+[39]: opiino [OPI]
+[40]: opiodr [OPI]

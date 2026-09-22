@@ -27,9 +27,11 @@ def test_sniff_and_parse(fixtures_dir: Path, name: str, kind: TraceKind) -> None
 
 
 def test_generic_fallback() -> None:
-    doc = parse_trace(
-        "Trace file /x/y.trc\nVersion 19.0.0.0.0\n*** 2026-01-01T00:00:00.000000+00:00\nORA-01555: snapshot too old\n"
+    text = (
+        "Trace file /x/y.trc\nVersion 19.0.0.0.0\n"
+        "*** 2026-01-01T00:00:00.000000+00:00\nORA-01555: snapshot too old\n"
     )
+    doc = parse_trace(text)
     assert doc.kind is TraceKind.GENERIC
     assert doc.ora_lines == ["ORA-01555: snapshot too old"]
     assert doc.header.oracle_version == "19.0.0.0.0"

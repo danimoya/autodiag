@@ -48,7 +48,9 @@ class CallStats(BaseModel):
         self.misses += kv.get("mis", 0)
 
     def merged(self, other: CallStats) -> CallStats:
-        return CallStats(**{k: getattr(self, k) + getattr(other, k) for k in self.model_fields})
+        return CallStats(
+            **{k: getattr(self, k) + getattr(other, k) for k in type(self).model_fields}
+        )
 
 
 class WaitStats(BaseModel):

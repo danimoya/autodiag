@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     tool_max_bytes: int = 16384
 
     # Transports
+    ssh_config: Path | None = Field(default=None, description="ssh_config file passed with -F")
     ssh_connect_timeout: int = 10
     ssh_command_timeout: int = 120
     sql_timeout: int = 60
@@ -70,9 +71,11 @@ class Settings(BaseSettings):
     retention_days: int = 90
     scan_interval_minutes: int = 30
 
-    @field_validator("data_dir", "targets_file", mode="after")
+    @field_validator("data_dir", "targets_file", "ssh_config", mode="after")
     @classmethod
-    def _expand_user(cls, value: Path) -> Path:
+    def _expand_user(cls, value: Path | None) -> Path | None:
+        if value is None:
+            return None
         return Path(os.path.expanduser(str(value))).resolve()
 
     @classmethod
