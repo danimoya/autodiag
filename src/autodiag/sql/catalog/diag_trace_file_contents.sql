@@ -1,6 +1,6 @@
 -- name: diag_trace_file_contents
 -- desc: Lines of a trace file read through the database (V$DIAG_TRACE_FILE_CONTENTS), no SSH needed
--- scope: cdb
+-- scope: pdb
 -- pack: none
 -- params: adr_home:str, trace_filename:str, line_from:int=1, line_to:int=2000
 select line_number, timestamp, section_name, payload

@@ -1,5 +1,6 @@
 import pytest
 
+from autodiag.sql.diag import incidents_for_problem
 from autodiag.sql.runner import SqlRunner
 
 pytestmark = pytest.mark.integration
@@ -24,7 +25,9 @@ def test_ping_and_diag_info(runner: SqlRunner) -> None:
 def test_problems_and_trace_contents_over_sqlnet(runner: SqlRunner, testbed_source) -> None:
     probs = runner.run_named("diag_problems", {"since_hours": 24 * 30}).as_dicts()
     p = next(p for p in probs if str(p["PROBLEM_KEY"]).startswith("ORA 7445"))
-    incs = runner.run_named("diag_incidents", {"problem_id": p["PROBLEM_ID"]}).as_dicts()
+    incs = incidents_for_problem(
+        runner, p["PROBLEM_ID"]
+    ).as_dicts()  # PDB incidents need a container switch
     assert incs and incs[0]["ERROR_NUMBER"] == 7445 and incs[0]["PROBLEM_KEY"] == p["PROBLEM_KEY"]
     # V$DIAG_TRACE_FILE lists only trace/, but incident traces are readable by base name
     files = runner.run_named("diag_trace_files", {"since_hours": 24 * 30}).as_dicts()

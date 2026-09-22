@@ -11,6 +11,7 @@ import typer
 from pydantic import BaseModel
 
 from autodiag.adr.source import AdrSource
+from autodiag.case.store import CaseStore
 from autodiag.core.models import Node, Target
 from autodiag.core.settings import Settings, load_settings
 from autodiag.core.targets import TargetInventory, load_targets
@@ -48,6 +49,24 @@ def transport_factory(s: Settings, t: Target) -> Callable[[Node], object]:
 def source(t: Target, s: Settings | None = None) -> AdrSource:
     s = s or settings()
     return AdrSource(t, transport_factory=transport_factory(s, t), ssh_config=s.ssh_config)
+
+
+def store(s: Settings | None = None) -> CaseStore:
+    s = s or settings()
+    return CaseStore(s.data_dir / "autodiag.db", artifacts_dir=s.data_dir / "cases")
+
+
+def sql_runner(s: Settings, t: Target):
+    """SQL*Net runner for a target, or None when it has no SQL*Net configuration."""
+    if t.sqlnet is None:
+        return None
+    from autodiag.sql.runner import SqlRunner
+
+    return SqlRunner(t.sqlnet, timeout=s.sql_timeout, diagnostics_pack=t.diagnostics_pack)
+
+
+def pct(v: float) -> str:
+    return f"{round(v * 100)}%"
 
 
 def cache_dir(s: Settings, t: Target) -> Path:

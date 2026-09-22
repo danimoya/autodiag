@@ -5,7 +5,16 @@ from __future__ import annotations
 import typer
 
 from autodiag import __version__
-from autodiag.cli import cmds_adr, cmds_alert, cmds_diff, cmds_target, cmds_trace
+from autodiag.cli import (
+    cmds_adr,
+    cmds_alert,
+    cmds_case,
+    cmds_diff,
+    cmds_kb,
+    cmds_report,
+    cmds_target,
+    cmds_trace,
+)
 
 app = typer.Typer(
     name="autodiag",
@@ -18,6 +27,9 @@ app.add_typer(cmds_adr.app, name="adr")
 app.add_typer(cmds_alert.app, name="alert")
 app.add_typer(cmds_trace.app, name="trace")
 app.add_typer(cmds_diff.app, name="diff")
+app.add_typer(cmds_case.app, name="case")
+app.add_typer(cmds_report.app, name="report")
+app.add_typer(cmds_kb.app, name="kb")
 
 
 def _version_callback(value: bool) -> None:

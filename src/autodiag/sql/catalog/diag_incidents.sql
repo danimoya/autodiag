@@ -1,6 +1,6 @@
 -- name: diag_incidents
 -- desc: Incidents of one ADR problem (V$DIAG_INCIDENT joined to its problem key)
--- scope: cdb
+-- scope: pdb
 -- pack: none
 -- params: problem_id:int
 select i.incident_id, i.problem_id, p.problem_key, i.create_time, i.status, i.error_facility,
