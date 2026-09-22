@@ -22,7 +22,27 @@ from pydantic_settings import (
 )
 
 DEFAULT_CONFIG_PATH = "~/.config/autodiag/config.toml"
+DEFAULT_SECRETS_PATH = "~/.config/autodiag/autodiag.env"
 CONFIG_ENV_VAR = "AUTODIAG_CONFIG"
+SECRETS_ENV_VAR = "AUTODIAG_SECRETS"
+
+
+def load_env_file(path: Path, *, override: bool = False) -> int:
+    """Export ``KEY=value`` lines of a private env file (target passwords, tokens) into the
+    process environment. Existing variables win unless ``override``. Returns the count."""
+    if not path.is_file():
+        return 0
+    n = 0
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key, value = key.strip(), value.strip().strip("'\"")
+        if override or key not in os.environ:
+            os.environ[key] = value
+            n += 1
+    return n
 
 
 def config_file_path() -> Path:
@@ -96,5 +116,10 @@ class Settings(BaseSettings):
 
 
 def load_settings(env_file: str | None = ".env", **overrides: object) -> Settings:
-    """Build settings; ``env_file=None`` disables ``.env`` loading (used by tests)."""
+    """Build settings; ``env_file=None`` disables ``.env`` loading (used by tests).
+
+    The private secrets file (``AUTODIAG_SECRETS`` or ``~/.config/autodiag/autodiag.env``)
+    is exported into the environment first so ``password_env`` lookups can find it.
+    """
+    load_env_file(Path(os.path.expanduser(os.environ.get(SECRETS_ENV_VAR, DEFAULT_SECRETS_PATH))))
     return Settings(_env_file=env_file, **overrides)  # type: ignore[call-arg]
