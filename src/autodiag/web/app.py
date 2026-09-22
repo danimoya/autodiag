@@ -316,11 +316,6 @@ def create_app(ctx: AutoDiagContext) -> FastAPI:
         return RedirectResponse(f"/cases/{case_id}", status_code=303)
 
     # ------------------------------------------------------------------ reports
-    @app.get("/reports/{report_id}", response_class=HTMLResponse)
-    def report_page(report_id: str) -> HTMLResponse:
-        r = st.get_report(report_id)
-        return render("report.html", r=r, body=_md_to_html(r.markdown))
-
     @app.get("/reports/{report_id}.md")
     def report_markdown(report_id: str) -> Response:
         r = st.get_report(report_id)
@@ -329,6 +324,11 @@ def create_app(ctx: AutoDiagContext) -> FastAPI:
             media_type="text/markdown; charset=utf-8",
             headers={"Content-Disposition": f'attachment; filename="{r.id}_{r.kind}.md"'},
         )
+
+    @app.get("/reports/{report_id}", response_class=HTMLResponse)
+    def report_page(report_id: str) -> HTMLResponse:
+        r = st.get_report(report_id)
+        return render("report.html", r=r, body=_md_to_html(r.markdown))
 
     # ------------------------------------------------------------------ artifacts / traces
     @app.get("/artifacts/{artifact_id}", response_class=HTMLResponse)
