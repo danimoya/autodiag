@@ -15,6 +15,7 @@ Run it from the virtualenv (`.venv/bin/autodiag …`) or as a module
 | Group | Purpose | Needs |
 |---|---|---|
 | `targets` | Show the inventory of databases AutoDiag may reach | targets file |
+| `diagnose` | Automated diagnosis: collect evidence, model assessment with verified proofs, ranked concerns | SSH (+SQL*Net, Ollama) |
 | `adr` | ADR problems, incidents and remote files through `adrci` | SSH |
 | `alert` | Alert-log grep and statistics | SSH |
 | `trace` | Parse and summarise a local trace file | nothing |
@@ -25,6 +26,25 @@ Run it from the virtualenv (`.venv/bin/autodiag …`) or as a module
 | `scan` | LLM-free scan for new ADR problems, scan history, retention purge | SSH |
 | `mcp` | Run the MCP server (stdio for OpenCode, HTTP for the shared service) | – |
 | `serve` | Web UI + REST API + MCP endpoint in one process | – |
+
+## Start here: `autodiag diagnose`
+
+One command per question, each ending in an assessment that states what matters, what was
+dismissed and why, with every concern proven by quotes from the collected evidence:
+
+```bash
+autodiag diagnose problem  -t prod01 -k 'ORA 600 [kkslgop1]'     # or --incident 10195
+autodiag diagnose alert    -t prod01 --hours 24                  # or --since/--until
+autodiag diagnose instance -t prod01 --live                      # whole RAC, all nodes
+```
+
+The collectors are deterministic and record every item as evidence in a case. The model
+(Ollama, `ollama_advisor_model`) reads a bounded, redacted dossier and returns JSON; each
+proof it cites is checked against the dossier and unproven claims are demoted to open
+questions. Without a reachable model, or with `--no-assess`, the same dossier is ranked by
+the severity rules and labelled as such. `--case new` records the proven concerns as
+findings; `--markdown FILE` writes the diagnosis; `--dossier` prints every item; `--json`
+returns everything.
 
 ## Walkthrough: an ORA-600 on a target
 
@@ -93,6 +113,17 @@ explanation hints.
 |---|---|
 | `autodiag trace parse FILE` | Sniff the kind (incident, 10046, 10053, deadlock, hang / systemstate, errorstack) and print the summary and section index. |
 | `autodiag trace profile FILE [--top 10]` | tkprof-style aggregation of a 10046 trace: per-cursor parse/exec/fetch, CPU, elapsed, disk, query, rows, plan hashes, top waits. Bind values are never stored. |
+
+### `autodiag diagnose`
+
+| Command | What it does |
+|---|---|
+| `autodiag diagnose problem -t TARGET (-k KEY \| --incident N) [--max-incidents 5] [--window-minutes 30]` | All incidents of the problem, parsed traces (error, first application frame, SQL, PL/SQL, stack), stack consistency and newest-vs-oldest diff, alert-log entries around the incidents with noise removed, knowledge base, version and patches, ASH around the incident. Then the assessment. |
+| `autodiag diagnose alert -t TARGET [--hours 24 \| --since ISO --until ISO]` | Every node's alert log in the window: entries classified by rules, noise counted not shown, duplicates folded, bursts vs the previous window, lifecycle events, rate change, ADR problems in the period, cross-node correlation on RAC, knowledge base per signature. Then the assessment. |
+| `autodiag diagnose instance -t TARGET [--days 7] [--hours 24] [--live/--no-live]` | The alert sweep plus ADR problems of the last days and, with live checks, the current state over SQL*Net: instances (GV$INSTANCE), PDB open modes, blocked sessions (all instances on RAC), top waits, ASH last hour, RAC global-cache waits, Exadata cell waits. Default: live when the target has SQL*Net. |
+
+Common options: `--case ID|new`, `--no-assess`, `--model NAME`, `--json`, `--dossier`,
+`--markdown FILE`.
 
 ### `autodiag diff`
 

@@ -38,3 +38,12 @@ retention, scheduled scans with notifications, golden evals) are in place.
   heuristics that may occasionally misclassify an unusual token.
 - **OpenCode version pin**: the integration was verified with OpenCode 1.18.x; the config
   directory conventions may change in the v2 line.
+
+
+## Delivered after v1.0
+
+- Automated diagnosis (`autodiag diagnose problem|alert|instance`, MCP `diagnose_*`, UI
+  button): rule-based noise suppression, bounded dossier, model assessment with verified
+  proofs, rules fallback. Pending refinements: tune `severity_rules.yaml` on real ExaCC
+  alert logs (19c wording), per-target rule overrides, asynchronous diagnosis in the web
+  UI, ASH time-zone alignment, a `diagnose sql` mode for 10046 pairs.

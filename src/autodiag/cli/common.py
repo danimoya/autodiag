@@ -65,6 +65,20 @@ def sql_runner(s: Settings, t: Target):
     return SqlRunner(t.sqlnet, timeout=s.sql_timeout, diagnostics_pack=t.diagnostics_pack)
 
 
+def context(s: Settings | None = None):
+    """Full tool context (store, sources, SQL runners) using the same factories the CLI
+    uses, so tests can substitute them."""
+    from autodiag.mcp.server import AutoDiagContext
+
+    s = s or settings()
+    return AutoDiagContext(
+        s,
+        inventory(s),
+        transport_factory=lambda t: transport_factory(s, t),
+        runner_factory=lambda t: sql_runner(s, t),
+    )
+
+
 def pct(v: float) -> str:
     return f"{round(v * 100)}%"
 

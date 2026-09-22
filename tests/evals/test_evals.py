@@ -157,3 +157,29 @@ async def test_scenario_ora600_repeat(server) -> None:
     assert sig["share"] == sc["expect"]["signature_share"] and sig["signature"]
     kb = await call(server, "kb_lookup", problem_key=t["trace"]["problem_key"])
     assert kb["hits"][0]["kind"] == sc["expect"]["kb_kind"]
+
+
+@pytest.mark.llm
+def test_model_assessment_is_grounded_on_live_testbed() -> None:
+    """The configured Ollama model must produce a verified assessment of the repeated
+    ORA-600 on the testbed: proofs quoted from the dossier, the recurrence recognised."""
+    from autodiag.cli import common
+    from autodiag.diagnose.engine import default_assessor, diagnose
+
+    ctx = common.context()
+    assessor = default_assessor(ctx.settings)
+    if assessor.client.available_url() is None:
+        pytest.skip("no Ollama endpoint reachable")
+    d = diagnose(
+        ctx,
+        mode="problem",
+        target="testbed",
+        problem_key="ORA 600 [autodiag_repeat]",
+        assessor=assessor,
+    )
+    a = d.assessment
+    assert a.model != "rules", a.notes
+    assert a.proofs_verified >= 1 and a.proofs_verified / max(a.proofs_total, 1) >= 0.6
+    assert a.concerns and a.concerns[0].proven
+    text = (a.headline + " " + " ".join(c.title + c.assessment for c in a.concerns)).lower()
+    assert "autodiag_repeat" in text or "ora-00600" in text or "ora-600" in text

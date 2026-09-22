@@ -171,6 +171,34 @@ def create_app(ctx: AutoDiagContext) -> FastAPI:
             raise HTTPException(500, result["error"])
         return RedirectResponse(f"/cases/{result['case_id']}", status_code=303)
 
+    @app.post("/targets/{name}/diagnose")
+    def diagnose_action(
+        name: str,
+        mode: str = Form(...),
+        problem_key: str = Form(""),
+        hours: float = Form(24.0),
+        days: int = Form(7),
+        live: str = Form("auto"),
+    ) -> RedirectResponse:
+        from autodiag.diagnose.engine import diagnose
+        from autodiag.diagnose.render import diagnosis_markdown
+
+        kw: dict[str, Any] = {}
+        if mode == "problem":
+            kw["problem_key"] = problem_key
+        elif mode == "alert":
+            kw["hours"] = hours
+        elif mode == "instance":
+            kw.update(days=days, hours=hours, live=None if live == "auto" else live == "yes")
+        else:
+            raise HTTPException(422, f"unknown mode {mode!r}")
+        try:
+            d = diagnose(ctx, mode=mode, target=name, record=True, assess=True, **kw)
+        except Exception as exc:  # noqa: BLE001 - surface collector/transport failures
+            raise HTTPException(500, f"{type(exc).__name__}: {exc}") from None
+        rep = st.add_report(d.case_id, kind="diagnosis", markdown=diagnosis_markdown(d))
+        return RedirectResponse(f"/reports/{rep.id}", status_code=303)
+
     @app.get("/targets/{name}/alertlog", response_class=HTMLResponse)
     def alertlog_page(
         name: str, hours: float = 24, grep: str = "", context: int = 3, top: int = 20

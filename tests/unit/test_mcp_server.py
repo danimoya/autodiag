@@ -92,6 +92,9 @@ async def test_tool_inventory(server) -> None:
         "collect_ahf",
         "job_status",
         "standard_triage",
+        "diagnose_problem",
+        "diagnose_alert",
+        "diagnose_instance",
     ]:
         assert n in names, n
     for t in tools:
@@ -292,3 +295,21 @@ async def test_standard_triage_and_jobs(server) -> None:
     assert j["job"]["id"].startswith("job_")
     st = await call(server, "job_status", job_id=j["job"]["id"])
     assert st["job"]["status"] in {"queued", "running", "done", "failed"}
+
+
+async def test_diagnose_tools_return_dossier_and_rules_assessment(server) -> None:
+    r = await call(
+        server, "diagnose_problem", target="testbed", problem_key="ORA 600 [autodiag_test]"
+    )
+    assert "error" not in r, r
+    assert r["assessment"]["model"] == "rules" and r["items"] and r["evidence_id"]
+    assert {i["kind"] for i in r["items"]} >= {"problem", "incident"}
+    assert "Rules-only ranking" in r["text"]
+    r = await call(server, "diagnose_alert", target="testbed", hours=24 * 365 * 5, max_bytes=800)
+    assert any(i["text"].startswith("(omitted") for i in r["items"])  # budget honoured
+    r = await call(
+        server, "diagnose_instance", target="prod-rac", days=3650, hours=24 * 365 * 5, live=False
+    )
+    assert any(i["kind"] == "correlation" for i in r["items"])
+    r = await call(server, "diagnose_problem", target="testbed")
+    assert r["error_type"] == "AdrSourceError"

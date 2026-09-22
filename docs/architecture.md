@@ -72,3 +72,37 @@ tool. Every tool result carries an `evidence_id`; findings must cite evidence id
 `python3.11 -m venv .venv && .venv/bin/pip install -e .` then `systemd/autodiag.service`
 as a user unit (`systemctl --user enable --now autodiag`). The unit uses `%h`, so it needs
 no editing per host.
+
+
+## Automated diagnosis (`autodiag.diagnose`, `autodiag.llm`)
+
+The model is the centre of a diagnosis; the code around it exists to feed it well and to
+keep it honest.
+
+1. **Collect** (`diagnose/collect.py`). One collector per mode builds a `Dossier`: a list of
+   `DossierItem`s (incident, problem, alert, alert_group, alert_burst, alert_rate,
+   lifecycle, stack_frequency, stack_diff, kb, query, env, correlation), each recorded as
+   evidence in the case store first so its id can be cited. Alert-log entries go through
+   `diagnose/rules.py`: ordered regex rules from `kb/data/severity_rules.yaml` map each
+   entry to critical / warning / info / noise. Noise is only counted per signature, info
+   is folded to one item per signature, warning and critical keep up to three entries per
+   signature, and a signature that grows ten-fold against the previous window is a
+   burst. On RAC the same non-info message on several nodes within two minutes becomes a
+   correlation item; a message seen on one node only is flagged too. Live checks over
+   SQL*Net are catalog queries whose rows are judged by small deterministic functions
+   (an instance not OPEN is critical, a PDB not open or a blocked session is a warning).
+2. **Assess** (`llm/assess.py`, `llm/ollama.py`). The dossier is rendered highest severity
+   first inside a byte budget derived from `ollama_num_ctx`, redacted at that boundary,
+   and sent to Ollama with a JSON schema (`AssessmentDraft`) and thinking disabled. The
+   answer is verified: every proof must quote text that occurs in the cited item (or in
+   another item, which is then cited instead). Concerns with no verified proof are
+   demoted to open questions, the overall severity is the worst proven concern, and the
+   result records how many proofs were verified. If no endpoint answers or the JSON is
+   invalid, `rules_assessment` ranks the dossier by the rule severities and says so.
+3. **Record and present** (`diagnose/engine.py`, `diagnose/render.py`). The diagnosis is
+   evidence in the case; with `record=True` proven concerns become findings (author
+   `agent`, or `rule` for the fallback) and actions become action findings. The CLI
+   prints text, the web UI stores a Markdown report of kind `diagnosis`, the MCP tools
+   return the dossier items and the assessment so an agent such as OpenCode can be the
+   assessor itself (`assess=false`, the default there) or ask for the local model
+   (`assess=true`).

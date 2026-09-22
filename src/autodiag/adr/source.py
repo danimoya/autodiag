@@ -83,6 +83,10 @@ class AdrSource:
                 refs.append(_Ref(node=node, adr_home=home))
         return refs
 
+    def refs(self) -> list[tuple[Node, str]]:
+        """(node, adr_home) pairs this target is diagnosed through, one per instance."""
+        return [(r.node, r.adr_home) for r in self._refs()]
+
     # -- queries ---------------------------------------------------------------------
     def list_homes(self, node: Node) -> list[str]:
         homes = parse_show_homes(self._run(node, "adrci_show_homes", {}))

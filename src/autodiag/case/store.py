@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from autodiag.adr.adrci import AdrIncident, AdrProblem
 
 FINDING_KINDS = {"root_cause", "contributing", "observation", "action"}
-REPORT_KINDS = {"dba", "sr"}
+REPORT_KINDS = {"dba", "sr", "diagnosis"}
 CASE_STATUSES = {"open", "closed"}
 
 

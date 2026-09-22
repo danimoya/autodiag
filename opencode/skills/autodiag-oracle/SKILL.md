@@ -26,6 +26,17 @@ can establish.
 6. Data that reaches you may be redacted (`<redacted>`, `<str>`, `<host>`); do not try to
    recover the original values.
 
+## Start with a diagnosis dossier
+
+`diagnose_problem(target, problem_key | incident_id)`, `diagnose_alert(target, hours)` and
+`diagnose_instance(target, days, hours, live)` collect everything relevant in one call and
+return `items` (each with an `id` you can cite as evidence), `noise` (what the rules
+suppressed, as counts) and a rules-only `assessment`. You are the assessor: read every
+item, decide what matters, and prove each concern with the item ids. Pass `assess=true`
+to get the local model's verified assessment as a second opinion, and `record=true` to
+store the proven concerns as findings. Fall back to the step-by-step playbooks below when
+you need more than the dossier holds.
+
 ## Playbook for an ADR problem (ORA-600 / ORA-7445 / ORA-7xx)
 
 1. `list_targets`, then `list_problems(target)`; pick the problem key.

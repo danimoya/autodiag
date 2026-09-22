@@ -26,6 +26,9 @@ from autodiag.core.models import Node, Target
 from autodiag.core.redact import redact_for_llm
 from autodiag.core.settings import Settings
 from autodiag.core.targets import TargetInventory
+from autodiag.diagnose.engine import diagnose as _diagnose
+from autodiag.diagnose.models import Diagnosis
+from autodiag.diagnose.render import diagnosis_lines
 from autodiag.diff.alertrate import compare_alert_rates as _compare_alert_rates
 from autodiag.diff.callstack import compare_stacks, frame_frequency, stack_from_incident
 from autodiag.diff.sqlprofile import compare_profiles
@@ -1213,6 +1216,147 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
             summary=f"triage {problem_key}: {len(incs)} incidents, {len(result['kb_hits'])} KB hits",
             target=t,
             case_id=case.id,
+        )
+
+    # ---------------------------------------------------------------- diagnosis
+    def _diag_payload(d: Diagnosis, max_bytes: int) -> dict[str, Any]:
+        ds = d.dossier
+        items: list[dict[str, Any]] = []
+        used = 0
+        for it in ds.sorted_items():
+            txt = it.text if len(it.text) <= 1200 else it.text[:1200] + " ...[truncated]"
+            row: dict[str, Any] = {
+                "id": it.id,
+                "kind": it.kind,
+                "severity_hint": it.severity_hint.value,
+                "ts": _fmt(it.ts),
+                "node": it.node,
+                "title": it.title,
+                "count": it.count,
+                "text": txt,
+            }
+            size = len(txt) + len(it.title) + 80
+            if used + size > max_bytes:
+                row["text"] = "(omitted: output budget; read it via get_case evidence)"
+                size = 140
+            used += size
+            items.append(row)
+        return {
+            "target": ds.target,
+            "mode": ds.mode,
+            "scope": ds.scope,
+            "generated_at": _fmt(ds.generated_at),
+            "nodes": ds.nodes,
+            "case_id": d.case_id,
+            "assessment": d.assessment.model_dump(mode="json"),
+            "items": items,
+            "noise": [n.model_dump(mode="json") for n in ds.noise[:20]],
+            "counts": ds.counts(),
+            "stats": ds.stats,
+            "errors": ds.errors,
+            "finding_ids": d.finding_ids,
+            "text": "\n".join(diagnosis_lines(d)),
+        }
+
+    def _diag_tool(name: str, params: dict[str, Any], max_bytes: int, **kw: Any) -> dict:
+        t = ctx.target(params["target"])
+        d = _diagnose(ctx, target=t.name, **kw)
+        a = d.assessment
+        return ok(
+            _diag_payload(d, max_bytes),
+            tool=name,
+            params=params,
+            summary=f"[{a.severity.value}] {a.headline}"[:200],
+            target=t,
+            case_id=d.case_id,
+        )
+
+    @mcp.tool
+    @guarded
+    def diagnose_problem(
+        target: str,
+        problem_key: str | None = None,
+        incident_id: int | None = None,
+        case_id: str | None = None,
+        assess: bool = False,
+        record: bool = False,
+        max_incidents: int = 5,
+        max_bytes: int = 24000,
+    ) -> dict:
+        """Automated diagnosis of one ADR problem (by problem_key or one incident_id): every
+        incident, parsed traces, stack consistency and diff, alert-log context with noise
+        removed, knowledge base, live ASH. Returns the evidence dossier (items with ids to cite)
+        plus an assessment: rules ranking by default, or the local Ollama model's verified
+        assessment with assess=true. record=true stores proven concerns as findings."""
+        return _diag_tool(
+            "diagnose_problem",
+            {"target": target, "problem_key": problem_key, "incident_id": incident_id},
+            max_bytes,
+            mode="problem",
+            problem_key=problem_key,
+            incident_id=incident_id,
+            case_id=case_id,
+            assess=assess,
+            record=record,
+            max_incidents=max_incidents,
+        )
+
+    @mcp.tool
+    @guarded
+    def diagnose_alert(
+        target: str,
+        hours: float = 24.0,
+        since: str | None = None,
+        until: str | None = None,
+        case_id: str | None = None,
+        assess: bool = False,
+        record: bool = False,
+        max_bytes: int = 24000,
+    ) -> dict:
+        """Automated diagnosis of the alert log(s) in a window (all nodes on RAC): entries
+        classified and de-noised, bursts, cross-node correlation, related ADR problems, knowledge
+        base. Same output shape as diagnose_problem."""
+        return _diag_tool(
+            "diagnose_alert",
+            {"target": target, "hours": hours, "since": since, "until": until},
+            max_bytes,
+            mode="alert",
+            hours=hours,
+            since=_ts(since),
+            until=_ts(until),
+            case_id=case_id,
+            assess=assess,
+            record=record,
+        )
+
+    @mcp.tool
+    @guarded
+    def diagnose_instance(
+        target: str,
+        days: int = 7,
+        hours: float = 24.0,
+        live: bool | None = None,
+        case_id: str | None = None,
+        assess: bool = False,
+        record: bool = False,
+        max_bytes: int = 24000,
+    ) -> dict:
+        """Automated diagnosis of a database instance or whole RAC: ADR problems of the last
+        days, alert logs of every node for the last hours with correlation, and with live=true
+        (default when SQL*Net is configured) the current state: instances, PDBs, blocked
+        sessions, top waits, ASH, RAC global cache, Exadata cells. Same output shape as
+        diagnose_problem."""
+        return _diag_tool(
+            "diagnose_instance",
+            {"target": target, "days": days, "hours": hours, "live": live},
+            max_bytes,
+            mode="instance",
+            days=days,
+            hours=hours,
+            live=live,
+            case_id=case_id,
+            assess=assess,
+            record=record,
         )
 
     return mcp

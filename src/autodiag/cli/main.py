@@ -9,6 +9,7 @@ from autodiag.cli import (
     cmds_adr,
     cmds_alert,
     cmds_case,
+    cmds_diagnose,
     cmds_diff,
     cmds_kb,
     cmds_report,
@@ -31,6 +32,7 @@ app.add_typer(cmds_adr.app, name="adr")
 app.add_typer(cmds_alert.app, name="alert")
 app.add_typer(cmds_trace.app, name="trace")
 app.add_typer(cmds_diff.app, name="diff")
+app.add_typer(cmds_diagnose.app, name="diagnose")
 app.add_typer(cmds_case.app, name="case")
 app.add_typer(cmds_report.app, name="report")
 app.add_typer(cmds_kb.app, name="kb")

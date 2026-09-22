@@ -186,3 +186,21 @@ def test_bearer_token_guards_api_and_mcp(
             },
         )
         assert r.status_code in (200, 400, 406)  # reached the MCP app, not a 404/401
+
+
+def test_diagnose_button_stores_report(client: TestClient, monkeypatch) -> None:
+    from autodiag.diagnose import engine as eng
+    from autodiag.llm.assess import rules_assessment
+
+    monkeypatch.setattr(eng, "default_assessor", lambda s, **kw: rules_assessment)
+    r = client.post(
+        "/targets/testbed/diagnose",
+        data={"mode": "alert", "hours": "99999"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303 and r.headers["location"].startswith("/reports/")
+    page = client.get(r.headers["location"])
+    assert page.status_code == 200 and "Diagnosis: testbed (alert)" in page.text
+    assert "Evidence considered" in page.text
+    r = client.post("/targets/testbed/diagnose", data={"mode": "bogus"}, follow_redirects=False)
+    assert r.status_code == 422

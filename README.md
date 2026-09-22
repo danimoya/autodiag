@@ -6,6 +6,12 @@ summarises alert logs, and compares an anomalous capture with a normal one (kern
 stacks from ORA-600 / ORA-7445 incidents, 10046 SQL-trace profiles, alert-log message
 rates) to surface the divergence and likely root causes.
 
+The centre of AutoDiag is an automated diagnosis: `autodiag diagnose problem|alert|instance`
+(also MCP tools and a button in the UI). Deterministic collectors gather a bounded dossier
+of evidence, a local Ollama model decides what matters and what is noise, and every concern
+it reports must be proven by quotes that are verified against the dossier before the DBA
+sees them. Without a model the same dossier is ranked by rules and labelled as such.
+
 The deterministic core is exposed three ways from one process:
 
 - **MCP server** `autodiag` for AI agents (OpenCode, Claude Code, any MCP client); the
@@ -30,6 +36,8 @@ container and fault kit, `docs/roadmap.md` what is still pending.
 
 ```bash
 autodiag targets list
+autodiag diagnose instance --target <name> --live
+autodiag diagnose problem --target <name> -k 'ORA 600 [...]'
 autodiag adr problems --target <name> --days 7
 autodiag adr incident --target <name> --id <incident> --fetch
 autodiag diff stacks anomaly.trc normal.trc
