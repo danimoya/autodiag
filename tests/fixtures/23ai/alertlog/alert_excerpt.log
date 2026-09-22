@@ -1,0 +1,36 @@
+2026-09-22T11:44:57.708298+00:00
+FREEPDB1(3):Opening pdb with Resource Manager plan: DEFAULT_PLAN
+Completed: Pluggable database FREEPDB1 opened read write 
+Completed: ALTER DATABASE OPEN
+2026-09-22T11:45:00.204999+00:00
+===========================================================
+Dumping current patch information
+===========================================================
+No patches have been applied
+===========================================================
+2026-09-22T12:02:55.503112+00:00
+Errors in file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_4021.trc  (incident=8873) (PDBNAME=CDB$ROOT):
+ORA-00600: internal error code, arguments: [autodiag_test], [0], [0], [], [], [], [], [], [], [], [], []
+Incident details in: /opt/oracle/diag/rdbms/free/FREE/incident/incdir_8873/FREE_ora_4021_i8873.trc
+2026-09-22T12:02:56.101000+00:00
+Use ADRCI or Support Workbench to package the incident.
+See Note 411.1 at My Oracle Support for error and packaging details.
+2026-09-22T12:07:41.309000+00:00
+Exception [type: SIGSEGV, Address not mapped to object] [ADDR:0x58] [PC:0x7F42ABB, kglic0()+1223] [flags: 0x0, count: 1]
+Errors in file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_5120.trc  (incident=9041) (PDBNAME=FREEPDB1):
+ORA-07445: exception encountered: core dump [kglic0()+1223] [SIGSEGV] [ADDR:0x58] [PC:0x7F42ABB] [Address not mapped to object] []
+FREEPDB1(3):Incident details in: /opt/oracle/diag/rdbms/free/FREE/incident/incdir_9041/FREE_ora_5120_i9041.trc
+2026-09-22T12:10:03.000000+00:00
+FREEPDB1(3):ORA-00060: Deadlock detected. See Note 60.1 at My Oracle Support for Troubleshooting ORA-60 Errors. More info in file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_5301.trc.
+2026-09-22T12:10:03.500000+00:00
+FREEPDB1(3):ORA-00060: Deadlock detected. See Note 60.1 at My Oracle Support for Troubleshooting ORA-60 Errors. More info in file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_5302.trc.
+2026-09-22T12:15:44.000000+00:00
+FREEPDB1(3):Hex dump of (file 17, block 131) in trace file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_5410.trc
+FREEPDB1(3):Corrupt block relative dba: 0x04400083 (file 17, block 131)
+FREEPDB1(3):Bad check value found during buffered read
+2026-09-22T12:20:00.000000+00:00
+Thread 1 advanced to log sequence 42 (LGWR switch),  current SCN: 3456789
+  Current log# 3 seq# 42 mem# 0: /opt/oracle/oradata/FREE/redo03.log
+2026-09-22T12:21:10.000000+00:00
+FREEPDB1(3):ORA-01555 caused by SQL statement below (SQL ID: 8h2ycsd7v6wq5, Query Duration=61 sec, SCN: 0x0000000000350a1b):
+FREEPDB1(3):SELECT AMOUNT FROM ORDERS ORDER BY ORDER_ID

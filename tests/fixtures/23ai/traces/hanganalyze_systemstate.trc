@@ -1,0 +1,804 @@
+Trace file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_1913.trc
+Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free
+Version 23.26.3.0.0
+Build label:    RDBMS_23.26.3.0.0DBRU_LINUX.X64_260704
+ORACLE_HOME:    /opt/oracle/product/26ai/dbhomeFree
+System name:	Linux
+Node name:	oradb-test
+Release:	5.14.0-611.34.1.el9_7.x86_64
+Version:	#1 SMP PREEMPT_DYNAMIC Mon Feb 23 12:07:36 UTC 2026
+Machine:	x86_64
+CLID:	P
+Instance name: FREE
+Instance number: 1
+Database name: FREE 
+Database unique name: FREE 
+Database id: 1509902213
+Database role: PRIMARY
+Redo thread mounted by this instance: 1
+Oracle binary inode: 	9783192
+Oracle process number: 84
+Unix process pid:       1913
+             NID:       4026537473
+             created:   2026-09-22T11:50:17.2728027769+00:00
+             image:     oracle@oradb-test (TNS V1-V3)
+
+
+*** 2026-09-22T11:50:18.016435+00:00 (CDB$ROOT(1))
+*** SESSION ID:(48.53864) 2026-09-22T11:50:18.016445+00:00
+*** CLIENT ID:() 2026-09-22T11:50:18.016454+00:00
+*** SERVICE NAME:(SYS$USERS) 2026-09-22T11:50:18.016462+00:00
+*** MODULE NAME:(sqlplus@oradb-test (TNS V1-V3)) 2026-09-22T11:50:18.016471+00:00
+*** ACTION NAME:() 2026-09-22T11:50:18.016479+00:00
+*** CLIENT DRIVER:(SQL*PLUS) 2026-09-22T11:50:18.016487+00:00
+*** CONTAINER ID:(1) 2026-09-22T11:50:18.016495+00:00
+*** CLIENT IP:(N/A) 2026-09-22T11:50:18.016504+00:00
+*** CONNECTION ID:(XBH4cfSoB3jgYwIAHqwudA==) 2026-09-22T11:50:18.016513+00:00
+ 
+Processing Oradebug command 'setmypid'
+
+*** 2026-09-22T11:50:18.016541+00:00 (CDB$ROOT(1))
+Oradebug command 'setmypid' console output: <none>
+
+*** 2026-09-22T11:50:18.165524+00:00 (CDB$ROOT(1))
+Processing Oradebug command 'unlimit'
+
+*** 2026-09-22T11:50:18.165607+00:00 (CDB$ROOT(1))
+Oradebug command 'unlimit' console output: <none>
+
+*** 2026-09-22T11:50:18.323600+00:00 (CDB$ROOT(1))
+Processing Oradebug command 'hanganalyze 3'
+
+*** 2026-09-22T11:50:18.440572+00:00 (CDB$ROOT(1))
+===============================================================================
+HANG ANALYSIS:
+  instances (db_name.oracle_sid): free.free
+  oradebug_node_dump_level: 3
+  analysis initiated by oradebug
+
+  os thread scheduling delay history: (sampling every 1.000000 secs)
+    0.000000 secs at [ 11:50:17 ]
+      NOTE: scheduling delay has not been sampled for 0.558931 secs
+    0.000000 secs from [ 11:50:13 - 11:50:18 ], 5 sec avg
+    0.000000 secs from [ 11:49:18 - 11:50:18 ], 1 min avg
+    0.000000 secs from [ 11:45:18 - 11:50:18 ], 5 min avg
+  vktm time drift history
+===============================================================================
+ 
+Chains most likely to have caused the hang:
+ [a] Chain 1 Signature: 'PL/SQL lock timer'<='enq: TX - row lock contention'
+     Chain 1 Signature Hash: 0x1e720d31
+ 
+===============================================================================
+Non-intersecting chains:
+ 
+-------------------------------------------------------------------------------
+Chain 1:
+-------------------------------------------------------------------------------
+    Oracle session identified by:
+    {
+                instance: 1 (free.free)
+                   os id: 1905, Unknown
+              process id: 33, oracle@oradb-test, non-fatal
+              session id: 178
+        session serial #: 46065
+             module name: 3 (SQL*Plus)
+                  pdb id: 3 (FREEPDB1)
+    }
+    is waiting for 'enq: TX - row lock contention' with wait info:
+    {
+                      p1: 'name|mode'=0x54580006
+                      p2: 'usn<<16 | slot'=0xa001b
+                      p3: 'sequence'=0x210
+            time in wait: 6.656485 sec
+           timeout after: never
+                 wait id: 23
+                blocking: 0 sessions
+       immediate waiters: 0 sessions
+      immediate blockers: os id: 1896, program: oracle@oradb-test
+          current sql_id: 1659221679 (65tdqpw2n1xhk)
+      running time(secs): 7
+             current sql: update lock_demo set val = 'wait' where id = 1
+             short stack: ksedsts<-ksdxfstk<-ksdxcb<-sspuser<-__sighandler()<-semtimedop<-sskgpwwait<-skgpwwait<-ksliwat<-kslwaitctx<-ksqcmi<-ksqgtlctx<-ksqgelctx<-ktuGetTxForXid<-ktcwit1<-kdddgb<-kdusru<-updrowFastPath<-qerupUpdRow<-qerupFetch<-updaul<-updThreePhaseExe<-updexe<-opiexe<-kpoal8<-opiodr<-ttcpip<-opitsk<-opiino<-opiodr<-opidrv<-sou2o<-opimai_real<-ssthrdmain<-main<-__libc_start_main<-_start
+            wait history:
+              * time between current wait and wait #1: 0.000458 sec
+              1.       event: 'Allocate CGA memory from OS'
+                 time waited: 0.000012 sec
+                     wait id: 22               p1: 'Bytes'=0x10000
+                                               p2: 'where'=0x1
+              * time between wait #1 and #2: 0.000213 sec
+              2.       event: 'Allocate PGA memory from OS'
+                 time waited: 0.000017 sec
+                     wait id: 21               p1: 'Bytes'=0x10000
+                                               p2: 'where'=0x2
+              * time between wait #2 and #3: 0.000400 sec
+              3.       event: 'Allocate CGA memory from OS'
+                 time waited: 0.000008 sec
+                     wait id: 20               p1: 'Bytes'=0x10000
+                                               p2: 'where'=0x1
+    }
+    and is blocked by
+ => Oracle session identified by:
+    {
+                instance: 1 (free.free)
+                   os id: 1896, Sleeping
+              process id: 42, oracle@oradb-test, non-fatal
+              session id: 70
+        session serial #: 12487
+             module name: 3 (SQL*Plus)
+                  pdb id: 3 (FREEPDB1)
+    }
+    which is waiting for 'PL/SQL lock timer' with wait info:
+    {
+                      p1: 'duration'=0x0
+            time in wait: 10.793543 sec
+           timeout after: 29.206457 sec
+                 wait id: 30
+                blocking: 1 session
+       immediate waiters: 1 session
+          current sql_id: 1097219144 (42tjw90529tsh)
+      running time(secs): 11
+             current sql: BEGIN dbms_session.sleep(40); END;
+             short stack: ksedsts<-ksdxfstk<-ksdxcb<-sspuser<-__sighandler()<-semtimedop<-sskgpwwait<-skgpwwait<-ksliwat<-kslwaitctx<-psdwat<-pevm_icd_call_common<-pfrinstr_ICAL<-pfrrun_no_tool<-pfrrun<-plsql_run<-peicnt<-kkxexe<-opiexe<-kpoal8<-opiodr<-ttcpip<-opitsk<-opiino<-opiodr<-opidrv<-sou2o<-opimai_real<-ssthrdmain<-main<-__libc_start_main<-_start
+            wait history:
+              * time between current wait and wait #1: 0.000975 sec
+              1.       event: 'Allocate CGA memory from OS'
+                 time waited: 0.000011 sec
+                     wait id: 29               p1: 'Bytes'=0x10000
+                                               p2: 'where'=0x1
+              * time between wait #1 and #2: 0.000268 sec
+              2.       event: 'Allocate CGA memory from OS'
+                 time waited: 0.000013 sec
+                     wait id: 28               p1: 'Bytes'=0x10000
+                                               p2: 'where'=0x1
+              * time between wait #2 and #3: 0.000819 sec
+              3.       event: 'Allocate CGA memory from OS'
+                 time waited: 0.000009 sec
+                     wait id: 27               p1: 'Bytes'=0x10000
+                                               p2: 'where'=0x1
+    }
+ 
+Chain 1 Signature: 'PL/SQL lock timer'<='enq: TX - row lock contention'
+Chain 1 Signature Hash: 0x1e720d31
+-------------------------------------------------------------------------------
+ 
+===============================================================================
+
+Extra information that will be dumped at higher levels:
+[level  4] :   1 node dumps -- [LEAF] [LEAF_NW] 
+[level  5] :   1 node dumps -- [NO_WAIT] [INVOL_WT] [SINGLE_NODE] [NLEAF] [SINGLE_NODE_NW] 
+ 
+State of ALL nodes
+([nodenum]/cnode/sid/sess_srno/session/ospid/state/(wait_hash)/{time_in_wait}/[adjlist]):
+[69]/1/70/12487/0x878b51a0/1896/LEAF/(0x30c5f6b4)/{10793}
+[177]/1/178/46065/0x879e92e8/1905/NLEAF/(0x12845616)/{6656}/[69]
+
+*** 2026-09-22T11:50:18.441634+00:00 (CDB$ROOT(1))
+===============================================================================
+END OF HANG ANALYSIS
+===============================================================================
+
+*** 2026-09-22T11:50:18.441680+00:00 (CDB$ROOT(1))
+===============================================================================
+HANG ANALYSIS DUMPS:
+  oradebug_node_dump_level: 3
+===============================================================================
+ 
+State of LOCAL nodes
+([nodenum]/cnode/sid/sess_srno/session/ospid/state/(wait_hash)/{time_in_wait}/[adjlist]):
+[69]/1/70/12487/0x878b51a0/1896/LEAF/(0x30c5f6b4)/{10793}
+[177]/1/178/46065/0x879e92e8/1905/NLEAF/(0x12845616)/{6656}/[69]
+ 
+
+ 
+No processes qualify for dumping.
+ 
+===============================================================================
+HANG ANALYSIS DUMPS: END
+===============================================================================
+
+*** 2026-09-22T11:50:18.441840+00:00 (CDB$ROOT(1))
+Oradebug command 'hanganalyze 3' console output: 
+Hang Analysis in /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_1913.trc
+
+*** 2026-09-22T11:50:18.630330+00:00 (CDB$ROOT(1))
+Processing Oradebug command 'dump systemstate 266'
+System state caller's stack:
+Short stack dump: ksedsts()+409<-ksdxfstk()+520<-ksdxdocmdmultex()+7071<-ksdxdocmdmult()+55<-ksudmp_proc_short_stack()+717<-ksudss_opt()+338<-ksdxdmp()+1555<-ksdxfdmp()+209<-ksdxen_int()+5829<-opiodr()+1593<-ttcpip()+1565<-opitsk()+2197<-opiino()+1111<-opiodr()+1593<-opidrv()+1048<-sou2o()+153<-opimai_real()+448<-ssthrdmain()+535<-main()+313<-__libc_start_main()+229<-_start()+46
+===================================================
+SYSTEM STATE (level=10, with short stacks)
+------------
+
+
+Dumping the Process Summary
+       1: PSEUDO process
+       2: PMON ospid 167 sid 1 ser 51353, waiting for 'pmon timer' 
+
+       3: CLMN ospid 171 sid 163 ser 21624, waiting for 'pmon timer' 
+
+       4: PSP0 ospid 175 sid 2 ser 26031, waiting for 'rdbms ipc message' 
+
+       5: VKTM ospid 179 sid 164 ser 45715, waiting for 'VKTM Logical Idle Wait' 
+
+       6: BG03 ospid 311_321 sid 29 ser 17470, waiting for 'rdbms ipc message' 
+
+       7: GEN0 ospid 208 sid 165 ser 51449, waiting for 'rdbms ipc message' 
+
+       8: MMAN ospid 212 sid 4 ser 7251, waiting for 'rdbms ipc message' 
+
+       9: M008 ospid 784 sid 221 ser 54403, waiting for 'class slave wait' 
+
+      10: GEN2 ospid 218 sid 5 ser 7459, waiting for 'rdbms ipc message' 
+
+      11: DIAG ospid 220 sid 167 ser 29819, waiting for 'DIAG idle wait' 
+
+      12: OFSD ospid 224_227 sid 6 ser 31961, waiting for 'OFS idle' 
+
+      13: SCMN ospid 224_224 sid 168 ser 26453, waiting for 'watchdog main loop' 
+
+      14: GWPD ospid 226_228 sid 7 ser 65101, waiting for 'Generic Process Pool Dispatcher: idle' 
+
+      15: SCMN ospid 226_226 sid 169 ser 44139, waiting for 'watchdog main loop' 
+
+      16: DBRM ospid 230 sid 8 ser 2829, waiting for 'rdbms ipc message' 
+
+      17: VKRM ospid 232 sid 170 ser 39120, waiting for 'VKRM Idle' 
+
+      18: PMAN ospid 236 sid 9 ser 53859, waiting for 'pman timer' 
+
+      19: DIA0 ospid 238 sid 171 ser 29141, waiting for 'DIAG idle wait' 
+
+      20: DBW0 ospid 240 sid 10 ser 39569, waiting for 'rdbms ipc message' 
+
+      21: LGWR ospid 244 sid 177 ser 21516, waiting for 'rdbms ipc message' 
+
+      22: CKPT ospid 246 sid 11 ser 44084, waiting for 'rdbms ipc message' 
+
+      23: SMON ospid 249 sid 172 ser 41640, waiting for 'smon timer' 
+
+      24: SMCO ospid 252 sid 12 ser 30796, waiting for 'rdbms ipc message' 
+
+PROCESS 1: 
+  ----------------------------------------
+  SO: 0x86ec2158, type: process (2), map: 0x8768b9f8
+      state: LIVE (0x4532), flags: 0x1
+      owner: 0x0, proc: 0x0
+      link: 0x86ec2178[0x86ec2178, 0x86ec2178]
+      child list count: 1, link: 0x86ec21b0[0x86ec7308, 0x86ec7308]
+      conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+  SOC: 0x8768b9f8, type: process (2), map: 0x86ec2158
+       state: LIVE (0x99fc), flags: INIT (0x1)
+  (process) Oracle pid:1, ser:0, calls cur/top: 0x0/0x0
+            flags : (0x20) PSEUDO  icon_uid:0 logon_pdbid=0
+            flags2: (0x0),  flags3: (0x10) 
+            call error: 0, sess error: 0, txn error 0
+            intr queue: empty
+    (post info) last post received: 0 0 0
+                last post received-location: No post
+                last process to post me: none
+                last post sent: 0 0 0
+                last post sent-location: No post
+                last process posted by me: none
+                waiter on post event: 0
+    (latch info) hold_bits=0x0 ud_influx=0x0
+      Waiter Link: [0x0,0x0]
+    O/S info: user: , term: 
+              ospid:  (DEAD)
+    OSD pid info: Unix process pid: 0, NID: 0, image: PSEUDO
+
+    PdbInfo:  Id=1 Name=CDB$ROOT Uid=1 DBid=1509902213 Guid=55E26E818ABA346CE063499B5E643C8D State=OPEN (1) Flags=BPC/LOADED/[00000204] Closing=0 CloseAborting=0 OfflineSCN=0x0000000000000000 CreateSCN=0x0000000000000000 RDBA=520 DictState=ACTIVE (2) DictFlags=[00000000] BlockSize=8192 SpaceUsage=0 MaxSpaceUsage=0 MaxDiagUsage=0 MaxAuditUsage=0 FedRootId=0 UndoSwitchoverSCN=0x0000000000000000 SrcPDB= DBLink= PDBCount=1 SgaVersion=(1,0) DropTime=0 RcvState=(Needed=0,State=0,OLog=0x0,CLog=0x0,DLog=0x0,OnlyPmon=0) ForceRcvState=(State=0,flags=0x0,Log=0x0) PostPlugCompletionSCN=0x0000000000000000 TenantKey= LockdownSyncCounter=0 Credname= CloudIdentity= Priority=1 LastRecoverySCN=0x0000000000000000 HybridRO=0 DefaultCredname= DefaultCrednameLength=65535 
+     KGL-UOL (Process state object)
+    KGX Atomic Operation Log 0x8768cc78
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768cce0
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768cd48
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768cdb0
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768ce18
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768ce80
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768cee8
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768cf50
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768cfb8
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 0 efd 0 whr 0 slp 0 fl 0
+    ----------------------------------------
+    SO: 0x86ec72e8, type: kss parent (5), map: 0x7000b160
+        state: LIVE (0x4532), flags: 0x1
+        owner: 0x86ec2158, proc: 0x0
+        link: 0x86ec7308[0x86ec21b0, 0x86ec21b0]
+        child list count: 1, link: 0x86ec7340[0x7aebdf60, 0x7aebdf60]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x7000b160, type: kss parent (5), map: 0x86ec72e8
+         state: LIVE (0x99fc), flags: INIT (0x1)
+      ----------------------------------------
+      SO: 0x7aebdf40, type: circuit holder (168), map: 0x7def7210
+          state: LIVE (0x4532), flags: 0x1
+          owner: 0x86ec72e8, proc: 0x86ec4740
+          link: 0x7aebdf60[0x86ec7340, 0x86ec7340]
+          child list count: 0, link: 0x7aebdf98[0x7aebdf98, 0x7aebdf98]
+          conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+      SOC: 0x7def7210, type: circuit holder (168), map: 0x7aebdf40
+           state: LIVE (0x99fc), flags: INIT (0x1)
+      (circuit holder) disp = 0x7def7150 (0, 1), proc = 0x876eaa08 (68, 1)
+
+
+*** 2026-09-22T11:50:18.689955+00:00 (CDB$ROOT(1))
+
+PROCESS 2: PMON
+  ----------------------------------------
+  SO: 0x86ec20f0, type: process (2), map: 0x8768d0a8
+      state: LIVE (0x4532), flags: 0x1
+      owner: 0x0, proc: 0x86ec20f0
+      link: 0x86ec2110[0x86ec2110, 0x86ec2110]
+      child list count: 8, link: 0x86ec2148[0x86f394d0, 0x86f51d88]
+      conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+  SOC: 0x8768d0a8, type: process (2), map: 0x86ec20f0
+       state: LIVE (0x99fc), flags: INIT (0x1)
+  (process) Oracle pid:2, ser:1, calls cur/top: 0x87b86c18/0x87b86c18
+            flags : (0xe) SYSTEM  icon_uid:0 logon_pdbid=0
+            flags2: (0x0),  flags3: (0x20010) 
+            call error: 0, sess error: 0, txn error 0
+            intr queue: empty
+    (post info) last post received: 0 0 127
+                last post received-location: ksucln0.h LINE:991 ID:ksucln_cleanup_list_add: new
+                last process to post me: pid=171, 10 secs ago
+                last post sent: 105 0 3
+                last post sent-location: ksl2.h LINE:3255 ID:kslpsr
+                last process posted by me: pid=171, 10 secs ago
+                waiter on post event: 0
+    (latch info) hold_bits=0x0 ud_influx=0x0
+    Process Group: DEFAULT, pseudo proc: 0x877d80d8
+    O/S info: user: oracle, term: UNKNOWN
+              ospid: 167 
+    OSD pid info: Unix process pid: 167, NID: 4026537473, image: oracle@oradb-test (PMON)
+    Short stack dump: ksedsts()+409<-ksdxfstk()+520<-ksdxcb()+2657<-sspuser()+232<-__sighandler()<-semtimedop()+14<-sskgpwwait()+245<-skgpwwait()+294<-ksliwat()+2205<-kslwaitctx()+206<-ksucln_wait()+711<-ksucln_coord_main()+361<-ksbrdp_int()+1228<-opirip()+1247<-opidrv()+568<-sou2o()+153<-opimai_real()+196<-ssthrdmain()+535<-main()+313<-__libc_start_main()+229<-_start()+46
+
+    PdbInfo:  Id=1 Name=CDB$ROOT Uid=1 DBid=1509902213 Guid=55E26E818ABA346CE063499B5E643C8D State=OPEN (1) Flags=BPC/LOADED/[00000204] Closing=0 CloseAborting=0 OfflineSCN=0x0000000000000000 CreateSCN=0x0000000000000000 RDBA=520 DictState=ACTIVE (2) DictFlags=[00000000] BlockSize=8192 SpaceUsage=0 MaxSpaceUsage=0 MaxDiagUsage=0 MaxAuditUsage=0 FedRootId=0 UndoSwitchoverSCN=0x0000000000000000 SrcPDB= DBLink= PDBCount=1 SgaVersion=(1,0) DropTime=0 RcvState=(Needed=0,State=0,OLog=0x0,CLog=0x0,DLog=0x0,OnlyPmon=0) ForceRcvState=(State=0,flags=0x0,Log=0x0) PostPlugCompletionSCN=0x0000000000000000 TenantKey= LockdownSyncCounter=0 Credname= CloudIdentity= Priority=1 LastRecoverySCN=0x0000000000000000 HybridRO=0 DefaultCredname= DefaultCrednameLength=65535 
+     KGL-UOL (Process state object)
+    KGX Atomic Operation Log 0x8768e328
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e390
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e3f8
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e460
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e4c8
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e530
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e598
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e600
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768e668
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    ----------------------------------------
+    SO: 0x86f394b0, type: channel handle (23), map: 0x849337b8
+        state: LIVE (0x4532), flags: 0x0
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x86f394d0[0x7aea5848, 0x86ec2148]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x849337b8, type: channel handle (23), map: 0x86f394b0
+         state: LIVE (0x99fc), flags: INIT (0x1)
+KSR:     (broadcast handle) 0x849337b8 flag: (2) ACTIVE SUBSCRIBER, 
+KSR:                        owner: 0x8768d0a8 - ospid: 167
+KSR:                        event: 1, last message event: 20,
+KSR:                        last message waited event: 20,
+KSR:                        next message: 0x0(0), messages read: 1
+KSR:                        lmfevt 1, lwhe 0, lwhi 0x0
+KSR:                       channel: (0x849545c8) scumnt mount lock [name: 80]
+KSR:                                scope: 1, KSR: event: 25, last mesage event: 20,
+KSR:                                publishers/subscribers: 0/23,
+KSR:                                messages published: 1
+KSR:                                heuristic msg queue length: 0
+KSR:                                consumer delay threshold: 417501100us
+KSR:                                min_cdelay: 120000000us max_cdelay: 600000000us
+KSR:                                avg_cdelay: 41750110us dump interval: 3600sec
+KSR:                                last dump timestamp: local: 0 remote: 0
+    ----------------------------------------
+    SO: 0x7aea5828, type: process cleanup (43), map: 0x7bb1d910
+        state: LIVE (0x4532), flags: 0x0
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x7aea5848[0x86ec72a0, 0x86f394d0]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x7bb1d910, type: process cleanup (43), map: 0x7aea5828
+         state: LIVE (0x99fc), flags: INIT (0x1)
+    (pmon) serial_num: 1
+           seconds since last dead process scan: hard=0, soft=356, part=1
+           cleanup_timer - total: 0 sec, current: 0 sec, timeouts: 0
+    ----------------------------------------
+    SO: 0x86ec7280, type: session (4), map: 0x877f07a8
+        state: LIVE (0x4532), flags: 0x1
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x86ec72a0[0x86f39538, 0x7aea5848]
+        child list count: 0, link: 0x86ec72d8[0x86ec72d8, 0x86ec72d8]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x877f07a8, type: session (4), map: 0x86ec7280
+         state: LIVE (0x99fc), flags: INIT (0x1)
+    (session) sid: 1 ser: 51353 trans: 0x0, creator: 0x8768d0a8
+              flags: (0x51) USR/- flags2: (0x409) -/-/INC
+              flags_idl: (0x1) status: BSY/-/-/- kill: -/-/-/-/-
+              DID: 0000-0000-00000000, short-term DID: 0000-0000-00000000
+              txn branch: 0x0
+          con_id/con_uid/con_name: 1/1/CDB$ROOT
+          con_logonuid: 1 con_logonid: 1
+          con_scuid: 1 con_scid: 1
+              edition#: 0
+              user#/name: 0/SYS
+              oct: 0, prv: 0, sql: 0x0, psql: 0x0
+              stats: 0x7ac4d990, PX stats: 0x87beba48 (EMPTY)
+    service name: SYS$BACKGROUND
+    Current Wait Stack:
+     0: waiting for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=118 seq_num=119 snap_id=1
+        wait times: snap=0.000400 sec, exc=0.000400 sec, total=0.000400 sec
+        wait times: max=3.000000 sec, heur=9.610919 sec
+        wait counts: calls=1 os=1
+        in_wait=1 iflags=0x5a0
+    Wait State:
+      fixed_waits=0 flags=0x22 boundary=0x0/-1
+    Session Wait History:
+        elapsed time of 0.001261 sec since current wait
+     0: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=117 seq_num=118 snap_id=1
+        wait times: snap=0.608155 sec, exc=0.608155 sec, total=0.608155 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.000286 sec of elapsed time
+     1: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=116 seq_num=117 snap_id=1
+        wait times: snap=3.000068 sec, exc=3.000068 sec, total=3.000068 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.000304 sec of elapsed time
+     2: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=115 seq_num=116 snap_id=1
+        wait times: snap=3.000076 sec, exc=3.000076 sec, total=3.000076 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.000300 sec of elapsed time
+     3: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=114 seq_num=115 snap_id=1
+        wait times: snap=3.000069 sec, exc=3.000069 sec, total=3.000069 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.001174 sec of elapsed time
+     4: waited for 'pmon timer'
+        duration=0x1, =0x0, =0x0
+        wait_id=113 seq_num=114 snap_id=1
+        wait times: snap=0.000002 sec, exc=0.000002 sec, total=0.000002 sec
+        wait times: max=0.010000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.001256 sec of elapsed time
+     5: waited for 'pmon timer'
+        duration=0x1, =0x0, =0x0
+        wait_id=112 seq_num=113 snap_id=1
+        wait times: snap=0.000005 sec, exc=0.000005 sec, total=0.000005 sec
+        wait times: max=0.010000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.002031 sec of elapsed time
+     6: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=111 seq_num=112 snap_id=1
+        wait times: snap=3.000092 sec, exc=3.000092 sec, total=3.000092 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.000333 sec of elapsed time
+     7: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=110 seq_num=111 snap_id=1
+        wait times: snap=3.000073 sec, exc=3.000073 sec, total=3.000073 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.000283 sec of elapsed time
+     8: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=109 seq_num=110 snap_id=1
+        wait times: snap=3.000080 sec, exc=3.000080 sec, total=3.000080 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.000318 sec of elapsed time
+     9: waited for 'pmon timer'
+        duration=0x12c, =0x0, =0x0
+        wait_id=108 seq_num=109 snap_id=1
+        wait times: snap=3.000072 sec, exc=3.000072 sec, total=3.000072 sec
+        wait times: max=3.000000 sec
+        wait counts: calls=1 os=1
+        occurred after 0.000374 sec of elapsed time
+    Sampled Session History of session 1 serial 51353
+    ---------------------------------------------------
+    The sampled session history is constructed by sampling
+    the target session every 1 second. The sampling process
+    captures at each sample if the session is in a non-idle wait,
+    an idle wait, or not in a wait. If the session is in a
+    non-idle wait then one interval is shown for all the samples
+    the session was in the same non-idle wait. If the
+    session is in an idle wait or not in a wait for
+    consecutive samples then one interval is shown for all
+    the consecutive samples. Though we display these consecutive
+    samples  in a single interval the session may NOT be continuously
+    idle or not in a wait (the sampling process does not know).
+ 
+    The history is displayed in reverse chronological order.
+ 
+    sample interval: 1 sec, max history 120 sec
+    ---------------------------------------------------
+      [121 samples,                                        11:48:18 - 11:50:18]
+        idle wait at each sample
+    temporary object counter: 0
+    last pdbid to increment: 0, last function to increment: (null)
+      ----------------------------------------
+      Virtual Thread:
+      kgskvt: 0x84764fa0, sess: 0x877f07a8, pdb: 1, sid: 1 ser: 51353
+      vc: 0x0, proc: 0x8768d0a8, idx: 1
+      consumer group cur: _ORACLE_BACKGROUND_GROUP_ (pdb 1) (upd? 0)
+mapped: _ORACLE_BACKGROUND_GROUP_, orig:  (pdb 0)
+      vt_state: 0x100, vt_flags: 0x4030, blkrun: 0, numa: 1
+      inwait: 0, wait event: 0, posted_run: 0, dead: 0
+      lastmodrngcnt: 0, lastmodrngcnt_loc: '(null)'
+      lastmodrblcnt: 0, lastmodrblcnt_loc: '(null)'
+      location where insched last set: kgskthrrun
+      location where insched last cleared: kgskthrrun1
+      location where inwait last set: NULL
+      location where inwait last cleared: NULL
+      is_assigned: 0, in_scheduler: 0, insched: 0
+      vt_active: 0 (pending: 0)
+      vt_pq_active: 0, dop: 0, pq_servers (cur: 0 cg: 0)
+      ps_allocs: 0, pxstmts (act: 0, done: 0 cg: 0)
+      used quanta (usecs):
+      stmt: 0, accum: 0, mapped: 0, tot: 0
+      idle time: 0 ms, active time: 0 (cg: 0) usec
+      last updnumps: 0 usec, active time (pq: 0 ps: 0) ms
+      cpu yields:       stmt: 0, accum: 0, mapped: 0, tot: 0
+      cpu waits:       stmt: 0, accum: 0, mapped: 0, tot: 0
+      cpu wait time (usec):       stmt: 0, accum: 0, mapped: 0, tot: 0
+      ASL queued time outs: 0, time: 0 (cur 0, cg 0)
+      PQQ queued time outs: 0, time: 0 (cur 0, cg 0)
+      Queue timeout violation: 0
+      calls aborted: 0, num est exec limit hit: 0
+      runaway error: 0
+
+      KTU Session Commit Cache Dump for IDLs: 
+
+      KTU Session Commit Cache Dump for Non-IDLs: 
+
+      ----------------------------------------
+      KKS-UOL used : 0 locks(used=0, free=0)
+      KGX Atomic Operation Log 0x7ac4d718
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       FSO mutex(0) uid 1 efd 0 whr 0 slp 0 fl 0
+      KGX Atomic Operation Log 0x7ac4d768
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       FSO mutex(0) uid 1 efd 0 whr 0 slp 0 fl 0
+      KGX Atomic Operation Log 0x7ac4d7b8
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       FSO mutex(0) uid 1 efd 0 whr 0 slp 0 fl 0
+      KGX Atomic Operation Log 0x7ac4d808
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       FSO mutex(0) uid 1 efd 0 whr 0 slp 0 fl 0
+      ----------------------------------------
+      KGL-UOL SO Cache(total=0, free=0)
+      KGX Atomic Operation Log 0x7ac4d2e8
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d350
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d3b8
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d420
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d488
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d4f0
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d558
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d5c0
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+      KGX Atomic Operation Log 0x7ac4d628
+       Mutex (nil)(0, 0) idn 0 oper NONE(0)
+       Library Cache(4) uid 1 efd 0 whr 0 slp 0 fl 0
+       oper=0 pt1=(nil) pt2=(nil) pt3=(nil)
+       pt4=(nil) pt5=(nil) ub4=0 flg=0x0 uw1=0 uw2=0
+       msk=0000-0000-0000-0000-0000
+    ----------------------------------------
+    SO: 0x86f39518, type: channel handle (23), map: 0x849335e0
+        state: LIVE (0x4532), flags: 0x0
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x86f39538[0x86f395a0, 0x86ec72a0]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x849335e0, type: channel handle (23), map: 0x86f39518
+         state: LIVE (0x99fc), flags: INIT (0x1)
+KSR:     (broadcast handle) 0x849335e0 flag: (2) ACTIVE SUBSCRIBER, 
+KSR:                        owner: 0x8768d0a8 - ospid: 167
+KSR:                        event: 2, last message event: 85,
+KSR:                        last message waited event: 85,
+KSR:                        next message: 0x0(0), messages read: 1
+KSR:                        lmfevt 2, lwhe 0, lwhi 0x0
+KSR:                       channel: (0x8494a7c8) system events broadcast channel [name: 1]
+KSR:                                scope: 2, KSR: event: 180, last mesage event: 85,
+KSR:                                publishers/subscribers: 0/99,
+KSR:                                messages published: 1
+KSR:                                oldest msg (?): 0x833ef650 id: 1 evt: 85 mq: 0x2 pub: 0x87696f78 ref 71/77 t=1790077494(-324)
+KSR:                                heuristic msg queue length: 1
+KSR:                                consumer delay threshold: 600000000us
+KSR:                                min_cdelay: 120000000us max_cdelay: 600000000us
+KSR:                                avg_cdelay: 120000000us dump interval: 3600sec
+KSR:                                last dump timestamp: local: 0 remote: 0
+    ----------------------------------------
+    SO: 0x86f39580, type: channel handle (23), map: 0x84933408
+        state: LIVE (0x4532), flags: 0x0
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x86f395a0[0x86f5f268, 0x86f39538]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x84933408, type: channel handle (23), map: 0x86f39580
+         state: LIVE (0x99fc), flags: INIT (0x1)
+KSR:     (broadcast handle) 0x84933408 flag: (2) ACTIVE SUBSCRIBER, 
+KSR:                        owner: 0x8768d0a8 - ospid: 167
+KSR:                        event: 2, last message event: 2,
+KSR:                        last message waited event: 2,
+KSR:                        next message: 0x0(0), messages read: 0
+KSR:                        lmfevt 2, lwhe 0, lwhi 0x0
+KSR:                       channel: (0x8495efc8) PDB Dismount Cleanup [name: 165]
+KSR:                                scope: 3, KSR: event: 170, last mesage event: 0,
+KSR:                                publishers/subscribers: 0/92,
+KSR:                                messages published: 0
+KSR:                                heuristic msg queue length: 0
+KSR:                                consumer delay threshold: 600000000us
+KSR:                                min_cdelay: 120000000us max_cdelay: 600000000us
+KSR:                                avg_cdelay: 120000000us dump interval: 3600sec
+KSR:                                last dump timestamp: local: 0 remote: 0
+    ----------------------------------------
+    SO: 0x86f5f248, type: ksz parent (37), map: 0x839004b0
+        state: LIVE (0x4532), flags: 0x1
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x86f5f268[0x86ecf3e8, 0x86f395a0]
+        child list count: 0, link: 0x86f5f2a0[0x86f5f2a0, 0x86f5f2a0]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x839004b0, type: ksz parent (37), map: 0x86f5f248
+         state: LIVE (0x99fc), flags: - (0x0)
+    ----------------------------------------
+    SO: 0x86ecf3c8, type: call (3), map: 0x87b86c18
+        state: LIVE (0x4532), flags: 0x1
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x86ecf3e8[0x86f51d88, 0x86f5f268]
+        child list count: 0, link: 0x86ecf420[0x86ecf420, 0x86ecf420]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x87b86c18, type: call (3), map: 0x86ecf3c8
+         state: LIVE (0x99fc), flags: INIT (0x1)
+    (call) sess: cur 877f07a8, rec 0, usr 877f07a8; flg:20 fl2:1; depth:0
+    (push loc) file: ksb.c line: 11504
+    svpt(xcb:0x0 sptn:0x1 uba: 0x00000000.0000.00 uba: 0x00000000.0000.00)
+    ----------------------------------------
+    SO: 0x86f51d68, type: OS proc request holder (32), map: 0x838ac338
+        state: LIVE (0x4532), flags: 0x0
+        owner: 0x86ec20f0, proc: 0x86ec20f0
+        link: 0x86f51d88[0x86ec2148, 0x86ecf3e8]
+        conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+    SOC: 0x838ac338, type: OS proc request holder (32), map: 0x86f51d68
+         state: LIVE (0x99fc), flags: INIT (0x1)
+    (osp req holder)
+
+
+*** 2026-09-22T11:50:18.720720+00:00 (CDB$ROOT(1))
+
+PROCESS 3: CLMN
+  ----------------------------------------
+  SO: 0x86ec2088, type: process (2), map: 0x8768e758
+      state: LIVE (0x4532), flags: 0x1
+      owner: 0x0, proc: 0x86ec2088
+      link: 0x86ec20a8[0x86ec20a8, 0x86ec20a8]
+      child list count: 9, link: 0x86ec20e0[0x86f39330, 0x86f51d20]
+      conid: 1, conuid: 1, SGA version=(1,0), pg: 0
+  SOC: 0x8768e758, type: process (2), map: 0x86ec2088
+       state: LIVE (0x99fc), flags: INIT (0x1)
+  (process) Oracle pid:3, ser:1, calls cur/top: 0x87b86ed0/0x87b86ed0
+            flags : (0xe) SYSTEM  icon_uid:0 logon_pdbid=0
+            flags2: (0x0),  flags3: (0x10) 
+            call error: 0, sess error: 0, txn error 0
+            intr queue: empty
+    (post info) last post received: 105 0 3
+                last post received-location: ksl2.h LINE:3255 ID:kslpsr
+                last process to post me: pid=167, 10 secs ago
+                last post sent: 0 0 127
+                last post sent-location: ksucln0.h LINE:991 ID:ksucln_cleanup_list_add: new
+                last process posted by me: pid=167, 10 secs ago
+                waiter on post event: 105
+    (latch info) hold_bits=0x0 ud_influx=0x0
+    Process Group: DEFAULT, pseudo proc: 0x877d80d8
+    O/S info: user: oracle, term: UNKNOWN
+              ospid: 171 
+    OSD pid info: Unix process pid: 171, NID: 4026537473, image: oracle@oradb-test (CLMN)
+    Short stack dump: ksedsts()+409<-ksdxfstk()+520<-ksdxcb()+2657<-sspuser()+232<-__sighandler()<-semtimedop()+14<-sskgpwwait()+245<-skgpwwait()+294<-ksliwat()+2205<-kslwaitctx()+206<-ksucln_wait()+711<-ksucln_clean_main()+511<-ksbrdp_int()+1228<-opirip()+1247<-opidrv()+568<-sou2o()+153<-opimai_real()+196<-ssthrdmain()+535<-main()+313<-__libc_start_main()+229<-_start()+46
+
+    PdbInfo:  Id=1 Name=CDB$ROOT Uid=1 DBid=1509902213 Guid=55E26E818ABA346CE063499B5E643C8D State=OPEN (1) Flags=BPC/LOADED/[00000204] Closing=0 CloseAborting=0 OfflineSCN=0x0000000000000000 CreateSCN=0x0000000000000000 RDBA=520 DictState=ACTIVE (2) DictFlags=[00000000] BlockSize=8192 SpaceUsage=0 MaxSpaceUsage=0 MaxDiagUsage=0 MaxAuditUsage=0 FedRootId=0 UndoSwitchoverSCN=0x0000000000000000 SrcPDB= DBLink= PDBCount=1 SgaVersion=(1,0) DropTime=0 RcvState=(Needed=0,State=0,OLog=0x0,CLog=0x0,DLog=0x0,OnlyPmon=0) ForceRcvState=(State=0,flags=0x0,Log=0x0) PostPlugCompletionSCN=0x0000000000000000 TenantKey= LockdownSyncCounter=0 Credname= CloudIdentity= Priority=1 LastRecoverySCN=0x0000000000000000 HybridRO=0 DefaultCredname= DefaultCrednameLength=65535 
+     KGL-UOL (Process state object)
+    KGX Atomic Operation Log 0x8768f9d8
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768fa40
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768faa8
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768fb10
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768fb78
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768fbe0
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768fc48
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768fcb0
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    KGX Atomic Operation Log 0x8768fd18
+     Mutex (nil)(0, 0) idn 0 oper NONE(0)
+     FSO mutex(0) uid 262142 efd 0 whr 0 slp 0 fl 0
+    ----------------------------------------
+[... remaining processes omitted ...]

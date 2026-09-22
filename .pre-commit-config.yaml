@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: repo-hygiene
+        name: repo hygiene (no environment-specific identifiers)
+        entry: scripts/hygiene.sh
+        language: script
+        pass_filenames: false
+      - id: ruff
+        name: ruff
+        entry: .venv/bin/ruff check
+        language: script
+        types: [python]

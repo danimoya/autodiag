@@ -1,0 +1,52 @@
+
+ADR Home = /opt/oracle/diag/rdbms/free/FREE:
+*************************************************************************
+
+**********************************************************
+INCIDENT INFO RECORD 1
+**********************************************************
+   INCIDENT_ID                   8051
+   STATUS                        ready
+   CREATE_TIME                   2026-09-22 11:44:42.803000 +00:00
+   PROBLEM_ID                    1
+   CLOSE_TIME                    <NULL>
+   FLOOD_CONTROLLED              none
+   ERROR_FACILITY                ORA
+   ERROR_NUMBER                  800
+   ERROR_ARG1                    Set Priority Failed
+   ERROR_ARG2                    VKTM
+   ERROR_ARG3                    Check traces and OS configuration
+   ERROR_ARG4                    Check Oracle document and MOS notes
+   ERROR_ARG5                    <NULL>
+   SIGNALLING_COMPONENT          background_proc
+   SIGNALLING_SUBCOMPONENT       <NULL>
+   SUSPECT_COMPONENT             <NULL>
+   SUSPECT_SUBCOMPONENT          <NULL>
+   ECID                          <NULL>
+   IMPACTS                       0
+
+**********************************************************
+INCIDENT INFO RECORD 2
+**********************************************************
+   INCIDENT_ID                   8275
+   STATUS                        ready
+   CREATE_TIME                   2026-09-22 11:49:52.843000 +00:00
+   PROBLEM_ID                    2
+   CLOSE_TIME                    <NULL>
+   FLOOD_CONTROLLED              none
+   ERROR_FACILITY                ORA
+   ERROR_NUMBER                  7445
+   ERROR_ARG1                    qeilbk1
+   ERROR_ARG2                    SIGSEGV
+   ERROR_ARG3                    ADDR:0xD431000006E5
+   ERROR_ARG4                    PC:0x19518052
+   ERROR_ARG5                    unknown code (0)
+   ERROR_ARG6                    <NULL>
+   SIGNALLING_COMPONENT          <NULL>
+   SIGNALLING_SUBCOMPONENT       <NULL>
+   SUSPECT_COMPONENT             <NULL>
+   SUSPECT_SUBCOMPONENT          <NULL>
+   ECID                          <NULL>
+   IMPACTS                       0
+2 rows fetched
+

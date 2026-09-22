@@ -1,0 +1,56 @@
+
+ADR Home = /opt/oracle/diag/rdbms/free/FREE:
+*************************************************************************
+
+**********************************************************
+INCIDENT INFO RECORD 1
+**********************************************************
+   INCIDENT_ID                   8873
+   STATUS                        ready
+   CREATE_TIME                   2026-09-22 11:02:55.501000 +00:00
+   PROBLEM_ID                    1
+   CLOSE_TIME                    <NULL>
+   FLOOD_CONTROLLED              none
+   ERROR_FACILITY                ORA
+   ERROR_NUMBER                  600
+   ERROR_ARG1                    autodiag_test
+   ERROR_ARG2                    0
+   ERROR_ARG3                    0
+   ERROR_ARG4                    <NULL>
+   ERROR_ARG5                    <NULL>
+   ERROR_ARG6                    <NULL>
+   ERROR_ARG7                    <NULL>
+   ERROR_ARG8                    <NULL>
+   ERROR_ARG9                    <NULL>
+   ERROR_ARG10                   <NULL>
+   ERROR_ARG11                   <NULL>
+   ERROR_ARG12                   <NULL>
+   SIGNALLING_COMPONENT          <NULL>
+   SIGNALLING_SUBCOMPONENT       <NULL>
+   SUSPECT_COMPONENT             <NULL>
+   SUSPECT_SUBCOMPONENT          <NULL>
+   ECID                          <NULL>
+   IMPACTS                       0
+   PROBLEM_KEY                   ORA 600 [autodiag_test]
+   FIRST_INCIDENT                8873
+   FIRSTINC_TIME                 2026-09-22 11:02:55.501000 +00:00
+   LAST_INCIDENT                 8873
+   LASTINC_TIME                  2026-09-22 11:02:55.501000 +00:00
+   IMPACT1                       0
+   IMPACT2                       0
+   IMPACT3                       0
+   IMPACT4                       0
+   KEY_NAME                      ProcId
+   KEY_VALUE                     51.7
+   KEY_NAME                      PQ
+   KEY_VALUE                     (0, 1758538975)
+   KEY_NAME                      Client ProcId
+   KEY_VALUE                     oracle@oradb-test (TNS V1-V3).4021_139948
+   KEY_NAME                      SID
+   KEY_VALUE                     282.23751
+   OWNER_ID                      1
+   INCIDENT_FILE                 /opt/oracle/diag/rdbms/free/FREE/incident/incdir_8873/FREE_ora_4021_i8873.trc
+   OWNER_ID                      1
+   INCIDENT_FILE                 /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_4021.trc
+1 rows fetched
+

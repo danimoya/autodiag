@@ -1,0 +1,57 @@
+[project]
+name = "autodiag"
+version = "0.1.0"
+description = "Oracle Database diagnostic assistant: ADR, trace and alert-log analysis with anomaly-vs-normal diffs, exposed as MCP tools, REST/Web UI and CLI"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "fastmcp>=2.0",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "oracledb>=2.2",
+    "python-dateutil>=2.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "respx>=0.21",
+]
+
+[project.scripts]
+autodiag = "autodiag.cli.main:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: needs the Oracle testbed container (ssh + sqlnet), not run by default",
+    "llm: needs a reachable Ollama, not run by default",
+]
+addopts = "-m 'not integration and not llm'"
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+autodiag = ["sql/catalog/*.sql", "report/templates/*", "web/templates/**/*", "web/static/**/*", "case/schema/*.sql"]

@@ -1,0 +1,14 @@
+[Unit]
+Description=AutoDiag - Oracle diagnostic MCP server, REST API and web UI
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/autodiag
+EnvironmentFile=-%h/.config/autodiag/autodiag.env
+ExecStart=%h/autodiag/.venv/bin/python -m autodiag serve
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,31 @@
+<msg time='2026-09-22T11:44:57.708+00:00' org_id='oracle' comp_id='rdbms'
+ type='UNKNOWN' level='16' host_id='oradb-test'
+ host_addr='10.88.0.11' pid='613' con_uid='2214054459'
+ con_id='3' con_name='FREEPDB1' seclabel='3'>
+ <txt>Opening pdb with Resource Manager plan: DEFAULT_PLAN
+ </txt>
+</msg>
+<msg time='2026-09-22T12:02:55.503+00:00' org_id='oracle' comp_id='rdbms'
+ msg_id='2327453090' type='INCIDENT_ERROR' level='1'
+ host_id='oradb-test' host_addr='10.88.0.11' pid='4021'
+ prob_key='ORA 600 [autodiag_test]' errid='8873'
+ detail_path='/opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_4021.trc' con_uid='1' con_id='1'
+ con_name='CDB$ROOT' seclabel='3'>
+ <txt>Errors in file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_4021.trc  (incident=8873) (PDBNAME=CDB$ROOT):
+ORA-00600: internal error code, arguments: [autodiag_test], [0], [0], [], [], [], [], [], [], [], [], []
+ </txt>
+ <arg name='PDBNAME' value='CDB$ROOT'/>
+</msg>
+<msg time='2026-09-22T12:10:03.000+00:00' org_id='oracle' comp_id='rdbms'
+ msg_id='ksqdld:9153:1234' type='ERROR' group='deadlock' level='1'
+ host_id='oradb-test' host_addr='10.88.0.11' pid='5301'
+ con_uid='2214054459' con_id='3' con_name='FREEPDB1' seclabel='3'>
+ <txt>ORA-00060: Deadlock detected. See Note 60.1 at My Oracle Support for Troubleshooting ORA-60 Errors. More info in file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_5301.trc.
+ </txt>
+</msg>
+<msg time='2026-09-22T12:20:00.000+00:00' org_id='oracle' comp_id='rdbms'
+ msg_id='kcrfw_switch:1234' type='NOTIFICATION' level='16' host_id='oradb-test'
+ host_addr='10.88.0.11' pid='700' con_uid='1' con_id='1' con_name='CDB$ROOT' seclabel='3'>
+ <txt>Thread 1 advanced to log sequence 42 (LGWR switch),  current SCN: 3456789
+ </txt>
+</msg>

@@ -1,0 +1,17 @@
+# Unprivileged sshd run by the oracle user. Only that user can log in.
+Port 2222
+ListenAddress 0.0.0.0
+HostKey /home/oracle/sshd/ssh_host_ed25519_key
+PidFile /home/oracle/sshd/sshd.pid
+AuthorizedKeysFile /home/oracle/.ssh/authorized_keys
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+UsePAM no
+StrictModes yes
+PermitUserEnvironment no
+X11Forwarding no
+AllowUsers oracle
+LogLevel INFO
+Subsystem sftp internal-sftp

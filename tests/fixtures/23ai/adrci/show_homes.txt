@@ -1,0 +1,4 @@
+ADR Homes: 
+diag/rdbms/free/FREE
+diag/tnslsnr/oradb-test/listener
+diag/clients/user_oracle/host_1234567890_110

@@ -1,0 +1,12 @@
+# Use with: ssh -F testbed/ssh_config autodiag-testbed
+# or add "Include /path/to/autodiag/testbed/ssh_config" to ~/.ssh/config
+Host autodiag-testbed
+    HostName 127.0.0.1
+    Port 2222
+    User oracle
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    UserKnownHostsFile ~/.ssh/known_hosts_autodiag
+    StrictHostKeyChecking accept-new
+    BatchMode yes
+    ConnectTimeout 10

@@ -1,0 +1,172 @@
+Trace file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_1804.trc
+Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free
+Version 23.26.3.0.0
+Build label:    RDBMS_23.26.3.0.0DBRU_LINUX.X64_260704
+ORACLE_HOME:    /opt/oracle/product/26ai/dbhomeFree
+System name:	Linux
+Node name:	oradb-test
+Release:	5.14.0-611.34.1.el9_7.x86_64
+Version:	#1 SMP PREEMPT_DYNAMIC Mon Feb 23 12:07:36 UTC 2026
+Machine:	x86_64
+CLID:	P
+Instance name: FREE
+Instance number: 1
+Database name: FREE 
+Database unique name: FREE 
+Database id: 1509902213
+Database role: PRIMARY
+Redo thread mounted by this instance: 1
+Oracle binary inode: 	9783192
+Oracle process number: 94
+Unix process pid:       1804
+             NID:       4026537473
+             created:   2026-09-22T11:49:53.-205923606+00:00
+             image:     oracle@oradb-test
+
+
+*** 2026-09-22T11:50:00.504942+00:00 (FREEPDB1(3))
+*** SESSION ID:(68.14223) 2026-09-22T11:50:00.504953+00:00
+*** CLIENT ID:() 2026-09-22T11:50:00.504962+00:00
+*** SERVICE NAME:(freepdb1) 2026-09-22T11:50:00.504971+00:00
+*** MODULE NAME:(SQL*Plus) 2026-09-22T11:50:00.504979+00:00
+*** ACTION NAME:() 2026-09-22T11:50:00.504988+00:00
+*** CLIENT DRIVER:(SQL*PLUS) 2026-09-22T11:50:00.504996+00:00
+*** CONTAINER ID:(3) 2026-09-22T11:50:00.505004+00:00
+*** CLIENT IP:(127.0.0.1) 2026-09-22T11:50:00.505013+00:00
+ 
+2026-09-22 11:50:00.455933*:ksq.c@13862:ksqdld_hdr_dump(): 
+DEADLOCK DETECTED ( ORA-00060 )
+See Note 60.1 at My Oracle Support for Troubleshooting ORA-60 Errors
+
+[Transaction Deadlock]
+ 
+The following deadlock is not an ORACLE error. It is a
+deadlock due to user error in the design of an application
+or from issuing incorrect ad-hoc SQL. The following
+information may aid in determining the deadlock:
+ 
+Deadlock graph:
+                                          ------------Blocker(s)-----------  ------------Waiter(s)------------
+Resource Name                             process session holds waits serial  process session holds waits serial
+TX-00020021-0000026C-CE1992F3-00000000         94      68     X        14223     104      70           X  58259
+TX-00030021-00000209-CE1992F3-00000000        104      70     X        58259      94      68           X  14223
+ 
+----- Information for waiting sessions -----
+Session 68:
+Holds resource TX-00020021-0000026C-CE1992F3-00000000 acquired 6 seconds ago.
+  sid: 68 ser: 14223 audsid: 40003 user: 137/AUTODIAG_TEST
+  pdb: 3/FREEPDB1
+    flags: (0x41) USR/- flags2: (0x40009) -/-/INC
+    flags_idl: (0x1) status: BSY/-/-/- kill: -/-/-/-/-
+  pid: 94 ospid: 1804
+  O/S info: user: oracle, term: UNKNOWN
+    image: oracle@oradb-test
+  client details:
+    O/S info: user: oracle, term: 
+    ospid: 1801
+    program: sqlplus@oradb-test (TNS V1-V3) machine: oradb-test
+    application name: SQL*Plus
+    application name hash value=3669949024
+  current SQL (id: 11028455718185258198):
+  UPDATE LOCK_DEMO SET VAL = 'a2' WHERE ID = 2
+ 
+Session 70:
+Holds resource TX-00030021-00000209-CE1992F3-00000000 acquired 6 seconds ago.
+  sid: 70 ser: 58259 audsid: 40004 user: 137/AUTODIAG_TEST
+  pdb: 3/FREEPDB1
+    flags: (0x41) USR/- flags2: (0x40009) -/-/INC
+    flags_idl: (0x1) status: BSY/-/-/- kill: -/-/-/-/-
+  pid: 104 ospid: 1806
+  O/S info: user: oracle, term: UNKNOWN
+    image: oracle@oradb-test
+  client details:
+    O/S info: user: oracle, term: 
+    ospid: 1802
+    program: sqlplus@oradb-test (TNS V1-V3) machine: oradb-test
+    application name: SQL*Plus
+    application name hash value=3669949024
+  current SQL (id: 304696072196474364):
+  UPDATE LOCK_DEMO SET VAL = 'b1' WHERE ID = 1
+ 
+----- End of information for waiting sessions -----
+ 
+
+*** 2026-09-22T11:50:00.505571+00:00 (FREEPDB1(3))
+dbkedDefDump(): Starting a non-incident diagnostic dump (flags=0x0, level=1, mask=0x0)
+----- Error Stack Dump -----
+<error barrier> at 0x7ffc0e170ed8 placed dbked.c@799
+<error barrier> at 0x7ffc0e1711c0 placed kse.c@3056
+<error barrier> at 0x7ffc0e174970 placed updexe.c@12635
+<error barrier> at 0x7ffc0e175760 placed updexe.c@4922
+----- Current SQL Statement for this session (sql_id=9k37k1dgsxm6q) -----
+UPDATE LOCK_DEMO SET VAL = 'a2' WHERE ID = 2
+----- Parser State -----
+Parser state1: len1=0 len2=35 pos1=0 pos2=5
+Parser state2: flg=0x0 xflg=0x300000 xxflg=0x0 3xflg=0x800
+Parser state3: ptty=2718 tty=0 tlen=5
+Parser state4: vdepth=0 pdepth=0
+Parser errs: err1=0 err2=0 err3=0
+Parser string: prx=0x7f38ff3fc120 base=0x0 cur=0x7ffc0e17dba5
+----- PL/SQL Stack -----
+----- PL/SQL Call Stack -----
+  object      line  object
+  handle    number  name
+0x78c5a8b8        36  package body AUTODIAG_TEST.PKG_ORDERS.DEADLOCK_A
+0x727e3868         1  anonymous block
+
+----- Call Stack Trace -----
+calling              call     entry                argument values in hex      
+location             type     point                (? means dubious value)     
+-------------------- -------- -------------------- ----------------------------
+ksedst1()+95         call     kgdsdst()            7FFC0E1707F0 000000002
+                                                   7FFC0E168C70 ? 7FFC0E168E10 ?
+                                                   7FFC0E170480 ? 000000082 ?
+ksedst()+50          call     ksedst1()            000000000 000000001
+                                                   7FFC0E168C70 ? 7FFC0E168E10 ?
+                                                   7FFC0E170480 ? 000000082 ?
+dbkedDefDump()+2690  call     ksedst()             000000000 000000001 ?
+0                                                  7FFC0E168C70 ? 7FFC0E168E10 ?
+                                                   7FFC0E170480 ? 000000082 ?
+ksedmp()+698         call     dbkedDefDump()       000000001 000000000
+[... process state omitted ...]
+block start : 0x7f38ff384000 : size = 262144 : biggest free subblock : 6080
+----- KSMEM_DUMP END -----
+----- KSM MGA PRIVATE DUMP START -----
+ksm_mga_dump_all : no namespaces found
+----- KSM MGA PRIVATE DUMP END -----
+----- VKTM Time Drifts Circular Buffer -----
+session 68: DID 0001-005E-00000025	session 70: DID 0001-0068-00000005 
+session 70: DID 0001-0068-00000005	session 68: DID 0001-005E-00000025 
+ 
+Rows waited on:
+  Session 68: obj - rowid = 00011DAC - AAAR2sAQAAAAA2PAAB
+  (dictionary objn - 73132, file - 1024, block - 3471, slot - 1)
+  Session 70: obj - rowid = 00011DAC - AAAR2sAQAAAAA2PAAA
+  (dictionary objn - 73132, file - 1024, block - 3471, slot - 0)
+ 
+2026-09-22 11:50:00.756150*:ksq.c@14103:ksqdldnl(): Information for THIS session:
+
+----- Current SQL Statement for this session (sql_id=9k37k1dgsxm6q) -----
+UPDATE LOCK_DEMO SET VAL = 'a2' WHERE ID = 2
+----- Parser State -----
+Parser state1: len1=0 len2=35 pos1=0 pos2=5
+Parser state2: flg=0x0 xflg=0x300000 xxflg=0x0 3xflg=0x800
+Parser state3: ptty=2718 tty=0 tlen=5
+Parser state4: vdepth=0 pdepth=0
+Parser errs: err1=0 err2=0 err3=0
+Parser string: prx=0x7f38ff3fc120 base=0x0 cur=0x7ffc0e17dba5
+----- PL/SQL Stack -----
+----- PL/SQL Call Stack -----
+  object      line  object
+  handle    number  name
+0x78c5a8b8        36  package body AUTODIAG_TEST.PKG_ORDERS.DEADLOCK_A
+0x727e3868         1  anonymous block
+===================================================
+PROCESS STATE
+-------------
+
+Process global information:
+     process: 0x8770f7e8, call: 0x7342ff78, xact: 0x80469d70, curses: 0x878af670, usrses: 0x878af670
+     in_exception_handler: no
+  ----------------------------------------
+  SO: 0x86ec3cb0, type: process (2), map: 0x8770f7e8

@@ -1,0 +1,204 @@
+Dump file /opt/oracle/diag/rdbms/free/FREE/incident/incdir_8275/FREE_ora_1753_i8275.trc
+Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free
+Version 23.26.3.0.0
+Build label:    RDBMS_23.26.3.0.0DBRU_LINUX.X64_260704
+ORACLE_HOME:    /opt/oracle/product/26ai/dbhomeFree
+System name:	Linux
+Node name:	oradb-test
+Release:	5.14.0-611.34.1.el9_7.x86_64
+Version:	#1 SMP PREEMPT_DYNAMIC Mon Feb 23 12:07:36 UTC 2026
+Machine:	x86_64
+CLID:	P
+Instance name: FREE
+Instance number: 1
+Database name: FREE 
+Database unique name: FREE 
+Database id: 1509902213
+Database role: PRIMARY
+Redo thread mounted by this instance: 1
+Oracle binary inode: 	9783192
+Oracle process number: 33
+Unix process pid:       1753
+             NID:       4026537473
+             created:   2026-09-22T11:49:45.-2475230273+00:00
+             image:     oracle@oradb-test
+
+
+*** 2026-09-22T11:49:52.846831+00:00
+*** SESSION ID:(178.56539) 2026-09-22T11:49:52.846840+00:00
+*** CLIENT ID:() 2026-09-22T11:49:52.846848+00:00
+*** SERVICE NAME:(freepdb1) 2026-09-22T11:49:52.846857+00:00
+*** MODULE NAME:(SQL*Plus) 2026-09-22T11:49:52.846866+00:00
+*** ACTION NAME:() 2026-09-22T11:49:52.846874+00:00
+*** CLIENT DRIVER:(SQL*PLUS) 2026-09-22T11:49:52.846882+00:00
+*** CONTAINER ID:(3) 2026-09-22T11:49:52.846890+00:00
+*** CLIENT IP:(127.0.0.1) 2026-09-22T11:49:52.846899+00:00
+ 
+[TOC00000]
+Jump to table of contents
+Dump continued from file: /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_1753.trc
+[TOC00001]
+ORA-07445: exception encountered: core dump [qeilbk1()+1746] [SIGSEGV] [ADDR:0xD431000006E5] [PC:0x19518052] [unknown code (0)] []
+
+[TOC00001-END]
+[TOC00002]
+========= Dump for incident 8275 (ORA 7445 [qeilbk1]) ========
+[TOC00003]
+----- Beginning of Customized Incident Dump(s) -----
+Dumping swap information
+Memory (Avail / Total) = 542.82M / 128784.39M
+Swap (Avail / Total) = 490.19M /  1535.99M
+Commit (AS / Limit) = 57838.31M / 65928.18M
+
+Stack (Used / Configured) = 0.05M / 32.00M
+
+Exception [type: SIGSEGV, unknown code (0)] [ADDR:0xD431000006E5] [PC:0x19518052, qeilbk1()+1746] [exception issued by pid: 1765, uid: 54321] [flags: 0x0, count: 1]
+
+Registers:
+%rax: 0x0000000000000317 %rbx: 0x0000000000000000 %rcx: 0x0000000000000000
+%rdx: 0x0000000000000000 %rdi: 0x0000000000000002 %rsi: 0x0000000000000003
+%rsp: 0x00007fffd6b69350 %rbp: 0x00007fffd6b69750  %r8: 0x00000000bf3a2514
+ %r9: 0x00007fffd6b69640 %r10: 0x00007f0073507b40 %r11: 0x00000000bf3a251c
+%r12: 0x00007f007677e3c0 %r13: 0x00007f0073507a98 %r14: 0x00007f0073554ec0
+%r15: 0x00007fffd6b69640 %rip: 0x0000000019518052 %efl: 0x0000000000000246
+  qeilbk1()+1725 (0x1951803d) je 0x1951990d
+  qeilbk1()+1731 (0x19518043) movl $0x1,-0x10(%rbp)
+  qeilbk1()+1738 (0x1951804a) mov -0x60(%rbp),%r10
+  qeilbk1()+1742 (0x1951804e) mov 0x14(%r10),%eax
+> qeilbk1()+1746 (0x19518052) cmp -0x18(%rbp),%eax
+  qeilbk1()+1749 (0x19518055) je 0x19519902
+  qeilbk1()+1755 (0x1951805b) mov %ebx,%eax
+  qeilbk1()+1757 (0x1951805d) mov %eax,0x68(%r13)
+  qeilbk1()+1761 (0x19518061) mov 0x10(%r10),%eax
+
+*** 2026-09-22T11:49:52.867201+00:00
+dbkedDefDump(): Starting a non-incident diagnostic dump (flags=0x3, level=3, mask=0x0)
+[TOC00004]
+----- Current SQL Statement for this session (sql_id=2cbq3fnthp7ut) -----
+SELECT COUNT(*) FROM CUSTOMERS WHERE CUSTOMER_ID BETWEEN 1 AND 100
+[TOC00005]
+----- Parser State -----
+Parser state1: len1=0 len2=39 pos1=0 pos2=5
+Parser state2: flg=0x0 xflg=0x300000 xxflg=0x0 3xflg=0x800
+Parser state3: ptty=2718 tty=0 tlen=5
+Parser state4: vdepth=0 pdepth=0
+Parser errs: err1=0 err2=0 err3=0
+Parser string: prx=0x7f007675a120 base=0x0 cur=0x7fffd6b71315
+[TOC00005-END]
+[TOC00006]
+----- PL/SQL Stack -----
+----- PL/SQL Call Stack -----
+  object      line  object
+  handle    number  name
+0x78c5a8b8        54  package body AUTODIAG_TEST.PKG_ORDERS.BUSY_LOOP
+0x76ffa440         1  anonymous block
+[TOC00006-END]
+[TOC00004-END]
+
+[TOC00007]
+----- Call Stack Trace -----
+calling              call     entry                argument values in hex      
+location             type     point                (? means dubious value)     
+-------------------- -------- -------------------- ----------------------------
+ksedst1()+95         call     kgdsdst()            7F007641DFF0 000000003
+                                                   7F0076416470 ? 7F0076416610 ?
+                                                   7F007641DC80 ? 000000083 ?
+ksedst()+50          call     ksedst1()            000000001 000000001
+                                                   7F0076416470 ? 7F0076416610 ?
+                                                   7F007641DC80 ? 000000083 ?
+dbkedDefDump()+2690  call     ksedst()             000000001 000000001 ?
+0                                                  7F0076416470 ? 7F0076416610 ?
+                                                   7F007641DC80 ? 000000083 ?
+ksedmp()+698         call     dbkedDefDump()       000000003 000000003
+                                                   7F0076416470 ? 7F0076416610 ?
+                                                   7F007641DC80 ? 000000083 ?
+ssexhd()+4546        call     ksedmp()             00000044F 000000003 ?
+                                                   7F0076416470 ? 7F0076416610 ?
+                                                   7F007641DC80 ? 000000083 ?
+sslssSynchHdlr()+47  call     ssexhd()             00000000B 000000000
+1                                                  7F007641FBF0 7F007641FAC0
+                                                   7F007641FA18 000000083 ?
+sslsshandler()+112   call     sslssSynchHdlr()     00000000B 7F007641FBF0
+                                                   7F007641FAC0 7F007641FAC0 ?
+                                                   7F007641FA18 ? 000000083 ?
+__sighandler()       call     sslsshandler()       00000000B 7F007641FBF0
+                                                   7F007641FAC0 7F007641FAC0 ?
+                                                   7F007641FA18 ? 000000083 ?
+qeilbk1()+1746       signal   __sighandler()       000000002 ? 000000003 ?
+                                                   000000000 ? 000000000 ?
+                                                   0BF3A2514 ? 7FFFD6B69640 ?
+qeilsr()+174         call     qeilbk1()            000000002 ? 7F0073507B40
+                                                   7F0073507848 7F0073507494
+                                                   0BF3A2514 ? 7FFFD6B69640 ?
+qerixtFetch()+336    call     qeilsr()             7F0073507848 7F0073507A98
+                                                   000000000 7F0073507494
+                                                   7F0073507B40 7FFFD6B69640 ?
+qergsFetchSimple()+  call     qerixtFetch()        7F0073507848 ? 7F0073507A98 ?
+488                                                019C66B20 7FFFD6B69B88
+                                                   7F0073507B40 ? 7F00735070E8
+qergsFetch()+262     call     qergsFetchSimple()   7F0073507848 ? 7F0073507A98 ?
+                                                   01976B3C0 7FFFD6B6A660
+[... call stack continues ...]
+
+call stack performance statistics:
+total                  : 0.289000 sec
+setup                  : 0.000000 sec
+stack unwind           : 0.106000 sec
+symbol translation     : 0.064000 sec
+printing the call stack: 0.003000 sec
+printing frame data    : 0.072000 sec
+printing argument data : 0.044000 sec
+
+
+----- End of Call Stack Trace -----
+
+[TOC00010]
+----- Process Map Dump -----
+
+*********************** Dumping process map ********************
+00400000-00faa000 r--p 00000000 09:03 9783192                            /opt/oracle/product/26ai/dbhomeFree/bin/oracle
+01000000-1a000000 r-xp 00c00000 09:03 9783192                            /opt/oracle/product/26ai/dbhomeFree/bin/oracle
+1a000000-1a07b000 r-xp 19c00000 09:03 9783192                            /opt/oracle/product/26ai/dbhomeFree/bin/oracle
+1a200000-1ff4c000 r--p 19e00000 09:03 9783192                            /opt/oracle/product/26ai/dbhomeFree/bin/oracle
+
+Heap: 0x7f0074f2a550
+Incident Context pointer in diag: 0x7f0074f2ba68
+Incident ID Cache: 0x7bb010f0 
+Invocation Context #: 0
+----- Invocation Context Dump -----
+Address: 0x7f0074f2b1c0
+Phase: 3
+flags: 0x10E0005
+Incident ID: 8275
+Error Descriptor: ORA-7445 [qeilbk1] [SIGSEGV] [ADDR:0xD431000006E5] [PC:0x19518052] [unknown code (0)] [] [] [] [] [] [] []
+Error class: 0
+Problem Key # of args: 1
+Number of actions: 35
+----- Incident Context Dump -----
+Address: 0x7f0074f2ba68
+Incident ID: 8275
+Problem Key: ORA 7445 [qeilbk1]
+Error: ORA-7445 [qeilbk1] [SIGSEGV] [ADDR:0xD431000006E5] [PC:0x19518052] [unknown code (0)] [] [] [] [] [] [] []
+[00]: dbgexExplicitEndInc [diag_dde]
+[01]: dbgeEndDDEInvocationImpl [diag_dde]
+[02]: ssexhd []
+[03]: sslssSynchHdlr []
+[04]: sslsshandler []
+[05]: __sighandler []
+[06]: qeilbk1 []<-- Signaling
+[07]: qeilsr []
+[08]: qerixtFetch [SQL_Execution]
+[09]: qergsFetchSimple [SQL_Execution]
+[10]: qergsFetch [SQL_Execution]
+[11]: opifch2 [OPI]
+[12]: opiefn0 [OPI]
+[13]: opipls [OPI]
+[14]: opiodr [OPI]
+[15]: rpidrus [RPI]
+[16]: skgmstack []
+[17]: rpidru [RPI]
+[18]: rpiswu2 [RPI]
+[19]: rpidrv [RPI]
+[20]: psddr0 [PROGINT_PLSQL]
+[21]: psdnal [PROGINT_PLSQL]
+[22]: pevm_EXECC [PLSQL_Code_Execution]

@@ -1,0 +1,35 @@
+targets:
+  - name: testbed
+    kind: single
+    platform: generic
+    oracle_version: "23ai"
+    db_unique_name: FREE
+    diagnostics_pack: true
+    nodes:
+      - host: 127.0.0.1
+        ssh_alias: autodiag-testbed
+        ssh_user: oracle
+        instance: FREE
+        oracle_home: /opt/oracle/product/23ai/dbhomeFree
+    adr_base: /opt/oracle
+    adr_homes: [diag/rdbms/free/FREE]
+    sqlnet:
+      dsn: 127.0.0.1:1521/FREEPDB1
+      user: c##autodiag
+      password_env: TESTBED_AUTODIAG_PWD
+  - name: prod-rac
+    kind: rac
+    platform: exacc
+    oracle_version: "19c"
+    db_unique_name: PRODDB_FRA
+    nodes:
+      - host: dbnode01.example.internal
+        instance: PRODDB1
+      - host: dbnode02.example.internal
+        instance: PRODDB2
+    adr_base: /u02/app/oracle
+    adr_homes: [diag/rdbms/proddb_fra/PRODDB1, diag/rdbms/proddb_fra/PRODDB2]
+    sqlnet:
+      dsn: proddb-scan.example.internal:1521/proddb_app.example.internal
+      user: c##autodiag
+      password_env: PRODDB_AUTODIAG_PWD
