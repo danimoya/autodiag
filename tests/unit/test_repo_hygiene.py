@@ -30,10 +30,16 @@ def _listed_files(root: Path) -> list[Path]:
     return [root / p for p in out if not p.startswith(SKIP_PREFIXES)]
 
 
+def _is_binary(path: Path) -> bool:
+    """Same rule as ``grep -I``: a NUL byte in the first block marks a binary file."""
+    with path.open("rb") as fh:
+        return b"\0" in fh.read(8192)
+
+
 def test_no_environment_identifiers_in_repo(repo_root: Path) -> None:
     offenders: list[str] = []
     for path in _listed_files(repo_root):
-        if not path.is_file():
+        if not path.is_file() or _is_binary(path):
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for lineno, line in enumerate(text.splitlines(), 1):

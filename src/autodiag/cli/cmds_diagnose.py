@@ -1,9 +1,11 @@
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
 
 from autodiag.cli import common
+from autodiag.cli.style import colorize_lines
 from autodiag.diagnose.engine import diagnose
 from autodiag.diagnose.models import Diagnosis
 from autodiag.diagnose.render import diagnosis_lines, diagnosis_markdown
@@ -30,13 +32,16 @@ def _run(**kw) -> Diagnosis:
     case = kw.pop("case")
     kw["record"] = case is not None
     kw["case_id"] = None if case in (None, "new") else case
+    if sys.stderr.isatty():
+        what = "assessing with the model" if kw.get("assess", True) else "ranking by rules"
+        typer.secho(f"collecting evidence from {kw['target']} and {what} ...", err=True, dim=True)
     return diagnose(ctx, **kw)
 
 
 def _emit(d: Diagnosis, *, as_json: bool, dossier: bool, markdown: Path | None) -> None:
     if markdown:
         markdown.write_text(diagnosis_markdown(d))
-    common.emit(d, as_json=as_json, lines=diagnosis_lines(d, dossier=dossier))
+    common.emit(d, as_json=as_json, lines=colorize_lines(diagnosis_lines(d, dossier=dossier)))
 
 
 def _iso(value: str | None) -> datetime | None:

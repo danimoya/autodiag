@@ -125,6 +125,10 @@ explanation hints.
 Common options: `--case ID|new`, `--no-assess`, `--model NAME`, `--json`, `--dossier`,
 `--markdown FILE`.
 
+On a terminal the diagnosis is coloured (severity, verified proofs, sections) and a
+progress line goes to stderr while evidence is collected; piped output is plain text.
+A recorded session is in `docs/demo/`.
+
 ### `autodiag diff`
 
 | Command | What it does |
