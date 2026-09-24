@@ -1,5 +1,9 @@
 # AutoDiag
 
+<p align="center">
+  <img src="docs/demo/autodiag.gif" alt="AutoDiag: automated diagnosis of an ADR problem" width="800">
+</p>
+
 Oracle Database diagnostic assistant for 19c / 23ai on Exadata Cloud@Customer and any
 other Oracle estate. It reads what a DBA would read by hand, ADR problems and incidents,
 multi-megabyte trace files, alert logs, ASH and instance views, and turns it into a short,

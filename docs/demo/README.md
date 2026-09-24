@@ -1,6 +1,6 @@
 # Demo recording
 
-`autodiag.gif` is the terminal animation for the repository README. It is a real
+`autodiag.gif` is the terminal animation at the top of the repository README. It is a real
 terminal session: the CLI lists the ADR problems of a target and diagnoses one of
 them end to end (evidence collection, model assessment, verified proofs). Only the
 keystrokes and the pacing of the output are simulated.
