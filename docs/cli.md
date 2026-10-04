@@ -66,8 +66,16 @@ autodiag case finding case_xxxx --kind root_cause --title "…" -e ev_xxxx --con
 autodiag report render case_xxxx --kind sr --env --out /tmp/sr.md
 ```
 
-The cache directory is `<data_dir>/cache/<target>/`; `adr fetch` and
-`adr incident --fetch` print the local path they wrote.
+The cache directory is `<data_dir>/cache/<target>/<source-hash>/`; each node and remote
+path has a separate cache entry. `adr fetch` and `adr incident --fetch` print the path.
+
+ADR numeric IDs are local to an ADR home. On RAC, use `--node` (host, SSH alias or
+instance name) and `--adr-home` from the listings with `adr incidents`, `adr incident`,
+`case collect-incident`, or `diagnose problem`. Ambiguous incident lookups fail rather
+than selecting the first node. `adr fetch` also requires a node on multi-node targets.
+
+`alert stats` reads the newest 64 MiB. If older history is omitted, text output shows
+a warning and JSON includes `coverage`; historical windows may then be incomplete.
 
 ## Walkthrough: a slow SQL with 10046 traces
 

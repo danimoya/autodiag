@@ -28,10 +28,11 @@ def problems(
                     p.last_incident or "-",
                     common.fmt_ts(p.lastinc_time),
                     p.instance or p.node,
+                    p.adr_home,
                 ]
                 for p in rows
             ],
-            ["id", "problem_key", "last_incident", "last_time", "instance"],
+            ["id", "problem_key", "last_incident", "last_time", "instance", "adr_home"],
         ),
     )
 
@@ -43,6 +44,8 @@ def incidents(
         None, "--problem-key", "-k", help="Problem key as printed by 'adr problems'."
     ),
     problem_id: int = typer.Option(None, "--problem-id", "-p", help="ADR problem id."),
+    node: str = typer.Option(None, "--node", help="Node host, SSH alias or instance."),
+    adr_home: str = typer.Option(None, "--adr-home", help="ADR home from the problem listing."),
     as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
 ) -> None:
     """List the incidents of one problem, selected by --problem-id or --problem-key."""
@@ -50,16 +53,24 @@ def incidents(
         typer.echo("give --problem-id or --problem-key", err=True)
         raise typer.Exit(code=1)
     src = common.source(common.target(target))
-    rows = src.list_incidents(problem_id=problem_id, problem_key=problem_key)
+    rows = src.list_incidents(
+        problem_id=problem_id, problem_key=problem_key, node=node, adr_home=adr_home
+    )
     common.emit(
         {"incidents": [i.model_dump() for i in rows]},
         as_json=as_json,
         lines=common.table(
             [
-                [i.incident_id, i.problem_key, common.fmt_ts(i.create_time), i.instance or i.node]
+                [
+                    i.incident_id,
+                    i.problem_key,
+                    common.fmt_ts(i.create_time),
+                    i.instance or i.node,
+                    i.adr_home,
+                ]
                 for i in rows
             ],
-            ["incident", "problem_key", "created", "instance"],
+            ["incident", "problem_key", "created", "instance", "adr_home"],
         ),
     )
 
@@ -68,6 +79,8 @@ def incidents(
 def incident(
     target: str = typer.Option(..., "--target", "-t", help="Target name (see 'targets list')."),
     incident_id: int = typer.Option(..., "--id", help="ADR incident id."),
+    node: str = typer.Option(None, "--node", help="Node host, SSH alias or instance."),
+    adr_home: str = typer.Option(None, "--adr-home", help="ADR home from the incident listing."),
     fetch: bool = typer.Option(
         False, "--fetch", help="Fetch the incident trace into the cache and summarise it"
     ),
@@ -77,7 +90,7 @@ def incident(
     s = common.settings()
     t = common.target(target, s)
     src = common.source(t, s)
-    inc = src.get_incident(incident_id)
+    inc = src.get_incident(incident_id, node=node, adr_home=adr_home)
     if inc is None:
         typer.echo(f"incident {incident_id} not found on {target}", err=True)
         raise typer.Exit(code=1)
@@ -90,13 +103,9 @@ def incident(
     ]
     lines += [f"  {k}: {v}" for k, v in inc.keys.items()]
     if fetch and inc.trace_file:
-        node = (
-            t.node_for_instance(inc.instance)
-            if inc.instance and any(n.instance == inc.instance for n in t.nodes)
-            else t.nodes[0]
-        )
-        dest = common.cache_dir(s, t) / Path(inc.trace_file).name
-        src.fetch_file(node, inc.trace_file, dest)
+        selected_node = src.incident_node(inc)
+        dest = src.cache_path(common.cache_dir(s, t), selected_node, inc.trace_file)
+        src.fetch_file(selected_node, inc.trace_file, dest)
         doc = parse_trace(dest.read_text(errors="replace"))
         lines.append(f"  fetched -> {dest} ({doc.line_count} lines, kind={doc.kind.value})")
         if hasattr(doc, "summary_lines"):
@@ -114,7 +123,11 @@ def fetch_file(
     """Copy one remote file under the target's diagnostic root to the cache (or --out)."""
     s = common.settings()
     t = common.target(target, s)
-    n = next((x for x in t.nodes if x.host == node), t.nodes[0]) if node else t.nodes[0]
-    dest = out or common.cache_dir(s, t) / Path(path).name
-    common.source(t, s).fetch_file(n, path, dest)
+    candidates = [n for n in t.nodes if node is None or node in (n.host, n.ssh_alias, n.instance)]
+    if len(candidates) != 1:
+        raise typer.BadParameter("Select one target node with --node")
+    n = candidates[0]
+    src = common.source(t, s)
+    dest = out or src.cache_path(common.cache_dir(s, t), n, path)
+    src.fetch_file(n, path, dest)
     typer.echo(str(dest))

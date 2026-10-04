@@ -109,6 +109,7 @@ async def test_scenario_deadlock(server) -> None:
 def test_headless_agent_mentions_expected_keywords(name: str, tmp_path: Path) -> None:
     """Runs OpenCode headless with the autodiag-triage agent against the live testbed."""
     import json
+    import os
     import shutil
     import subprocess
 
@@ -121,23 +122,35 @@ def test_headless_agent_mentions_expected_keywords(name: str, tmp_path: Path) ->
         "with standard_triage, "
         "then give the answer in the skill's format. Keep it under 300 words."
     )
+    command = [exe, "run", "--agent", "autodiag-triage", "--format", "json"]
+    model = os.environ.get("AUTODIAG_EVAL_OPENCODE_MODEL")
+    if model:
+        command += ["--model", model]
     proc = subprocess.run(
-        [exe, "run", "--agent", "autodiag-triage", "--format", "json", prompt],
+        [*command, prompt],
         capture_output=True,
         text=True,
         timeout=900,
         cwd=tmp_path,
     )
     texts = []
+    errors = []
     for line in proc.stdout.splitlines():
         try:
             ev = json.loads(line)
         except ValueError:
             continue
+        if ev.get("type") == "error":
+            errors.append(ev.get("error", {}).get("name", "unknown error"))
         part = ev.get("part") or {}
         if part.get("type") == "text":
             texts.append(part.get("text", ""))
     answer = "\n".join(texts)
+    assert proc.returncode == 0 and not errors, (
+        f"OpenCode exited {proc.returncode}; error events: {errors}. "
+        "Check the client logs and 'opencode models'; set AUTODIAG_EVAL_OPENCODE_MODEL "
+        "to override a stale default model."
+    )
     missing = [k for k in sc["expect"]["answer_keywords"] if k.lower() not in answer.lower()]
     assert not missing, f"answer lacks {missing}:\n{answer[:1500]}"
 

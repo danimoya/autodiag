@@ -58,9 +58,17 @@ def dossier_text(
     head.append(
         "ITEMS (id | kind | severity hint | time | node). Quote proofs verbatim from item text."
     )
-    parts: list[str] = []
+    if max_bytes < 1:
+        raise ValueError("max_bytes must be positive")
+
+    def clip(text: str, limit: int) -> str:
+        return text.encode("utf-8")[: max(0, limit)].decode("utf-8", errors="ignore")
+
+    parts: list[str] = [clip("\n".join(head), max_bytes)]
     seen: dict[str, str] = {}
-    used = sum(len(h) + 1 for h in head)
+    used = len(parts[0].encode("utf-8"))
+    # Reserve space to make omitted evidence explicit without exceeding the prompt cap.
+    reserve = len(f"\nNOT INCLUDED (budget): {len(dossier.items)} items".encode())
     skipped: list[DossierItem] = []
     for it in dossier.sorted_items():
         text = (
@@ -73,20 +81,22 @@ def dossier_text(
         title = redact_for_llm(it.title) if redact else it.title
         ts = it.ts.strftime("%Y-%m-%dT%H:%M:%S") if it.ts else "-"
         block = (
-            f"--- [{it.id}] {it.kind} | {it.severity_hint.value} | {ts} | {it.node or '-'}"
+            f"--- [{it.id}] {it.kind} | {it.severity_hint.value} | {ts} | "
+            f"{redact_for_llm(it.node or '-') if redact else it.node or '-'}"
             + (f" | x{it.count}" if it.count > 1 else "")
             + f"\ntitle: {title}\n{text}\n"
         )
-        if used + len(block) > max_bytes:
+        size = len(block.encode("utf-8")) + 1
+        if used + size + reserve > max_bytes:
             skipped.append(it)
             continue
         parts.append(block)
         seen[it.id] = f"title: {title}\n{text}"
-        used += len(block)
+        used += size
     tail: list[str] = []
     if skipped:
         tail.append("")
-        tail.append(f"NOT INCLUDED (budget), {len(skipped)} items, titles only:")
+        tail.append(f"NOT INCLUDED (budget): {len(skipped)} items")
         tail += [f"- [{it.id}] {it.severity_hint.value}: {it.title[:120]}" for it in skipped[:40]]
     if dossier.noise:
         tail.append("")
@@ -96,7 +106,12 @@ def dossier_text(
             last = g.last_ts.strftime("%H:%M") if g.last_ts else "?"
             node = f" [{g.node}]" if g.node else ""
             tail.append(f"- {g.signature[:120]} x{g.count} ({f}..{last}){node}")
-    return "\n".join(head + parts + tail), seen
+    suffix = "\n".join(tail)
+    if redact:
+        suffix = redact_for_llm(suffix)
+    if suffix and used < max_bytes:
+        parts.append(clip(suffix, max_bytes - used - 1))
+    return "\n".join(parts), seen
 
 
 def build_messages(prompt_text: str) -> list[dict[str, str]]:

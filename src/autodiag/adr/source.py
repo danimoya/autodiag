@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from hashlib import sha256
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -14,6 +15,8 @@ from autodiag.adr.adrci import (
     parse_show_incident,
     parse_show_problem,
 )
+from autodiag.alertlog.models import AlertRecord
+from autodiag.alertlog.text import parse_alert_text
 from autodiag.core.models import Node, Target
 from autodiag.transport.ssh import SshTransport
 
@@ -30,6 +33,30 @@ class IncidentRow(AdrIncident):
 
 class AdrSourceError(RuntimeError):
     pass
+
+
+class AlertRead(BaseModel):
+    records: list[AlertRecord]
+    truncated: bool
+    limit_bytes: int
+
+    @property
+    def coverage(self) -> dict:
+        timestamps = [r.ts for r in self.records if r.ts]
+        return {
+            "truncated": self.truncated,
+            "limit_bytes": self.limit_bytes,
+            "oldest_available": min(timestamps).isoformat() if timestamps else None,
+            "newest_available": max(timestamps).isoformat() if timestamps else None,
+            "line_numbers": "tail-relative" if self.truncated else "file-relative",
+            "warning": (
+                f"Only the last {self.limit_bytes} bytes of the alert log were collected; "
+                "Older history was omitted. Requested windows and rate comparisons "
+                "may be incomplete."
+                if self.truncated
+                else None
+            ),
+        }
 
 
 class _Ref(BaseModel):
@@ -87,6 +114,31 @@ class AdrSource:
         """(node, adr_home) pairs this target is diagnosed through, one per instance."""
         return [(r.node, r.adr_home) for r in self._refs()]
 
+    def selected_refs(self, node: str | None = None, adr_home: str | None = None) -> list[_Ref]:
+        refs = [
+            r
+            for r in self._refs()
+            if (node is None or node in (r.node.host, r.node.ssh_alias, r.node.instance))
+            and (adr_home is None or r.adr_home == adr_home)
+        ]
+        if not refs and (node is not None or adr_home is not None):
+            raise AdrSourceError("No matching node/ADR home in this target")
+        return refs
+
+    def select_ref(self, node: str | None = None, adr_home: str | None = None) -> tuple[Node, str]:
+        refs = self.selected_refs(node, adr_home)
+        if len(refs) != 1:
+            raise AdrSourceError("Select one ADR home with node and adr_home")
+        return refs[0].node, refs[0].adr_home
+
+    def incident_node(self, incident: IncidentRow) -> Node:
+        return self.select_ref(incident.node, incident.adr_home)[0]
+
+    @staticmethod
+    def cache_path(cache: Path, node: Node, remote_path: str) -> Path:
+        identity = sha256(f"{node.ssh_target}:{remote_path}".encode()).hexdigest()[:16]
+        return cache / identity / Path(remote_path).name
+
     # -- queries ---------------------------------------------------------------------
     def list_homes(self, node: Node) -> list[str]:
         homes = parse_show_homes(self._run(node, "adrci_show_homes", {}))
@@ -100,20 +152,30 @@ class AdrSource:
             )
             for p in parse_show_problem(text):
                 out.append(
-                    ProblemRow(**p.model_dump(), node=ref.node.host, instance=ref.node.instance)
+                    ProblemRow(
+                        **{**p.model_dump(), "adr_home": ref.adr_home},
+                        node=ref.node.host,
+                        instance=ref.node.instance,
+                    )
                 )
         out.sort(key=lambda p: (p.lastinc_time is None, p.lastinc_time), reverse=True)
         return out
 
     def list_incidents(
-        self, *, problem_id: int | None = None, problem_key: str | None = None, mode: str = "brief"
+        self,
+        *,
+        problem_id: int | None = None,
+        problem_key: str | None = None,
+        mode: str = "brief",
+        node: str | None = None,
+        adr_home: str | None = None,
     ) -> list[IncidentRow]:
         """Incidents of one problem. adrci filters incidents by ``problem_id`` only, so a key
         is first resolved to the matching problem id(s) through ``show problem``."""
         if problem_id is None and problem_key is None:
             raise AdrSourceError("problem_id or problem_key is required")
         out: list[IncidentRow] = []
-        for ref in self._refs():
+        for ref in self.selected_refs(node, adr_home):
             ids = (
                 [problem_id]
                 if problem_id is not None
@@ -128,7 +190,9 @@ class AdrSource:
                 for i in parse_show_incident(text):
                     out.append(
                         IncidentRow(
-                            **i.model_dump(), node=ref.node.host, instance=ref.node.instance
+                            **{**i.model_dump(), "adr_home": ref.adr_home},
+                            node=ref.node.host,
+                            instance=ref.node.instance,
                         )
                     )
         out.sort(key=lambda i: i.incident_id, reverse=True)
@@ -142,8 +206,11 @@ class AdrSource:
         )
         return [p.problem_id for p in parse_show_problem(text)]
 
-    def get_incident(self, incident_id: int) -> IncidentRow | None:
-        for ref in self._refs():
+    def get_incident(
+        self, incident_id: int, *, node: str | None = None, adr_home: str | None = None
+    ) -> IncidentRow | None:
+        matches = []
+        for ref in self.selected_refs(node, adr_home):
             text = self._run(
                 ref.node,
                 "adrci_show_incident_by_id",
@@ -151,10 +218,16 @@ class AdrSource:
             )
             incs = parse_show_incident(text)
             if incs:
-                return IncidentRow(
-                    **incs[0].model_dump(), node=ref.node.host, instance=ref.node.instance
+                matches.append(
+                    IncidentRow(
+                        **{**incs[0].model_dump(), "adr_home": ref.adr_home},
+                        node=ref.node.host,
+                        instance=ref.node.instance,
+                    )
                 )
-        return None
+        if len(matches) > 1:
+            raise AdrSourceError(f"Incident {incident_id} is ambiguous; specify node and adr_home")
+        return matches[0] if matches else None
 
     # -- files -----------------------------------------------------------------------
     def alert_log_path(self, node: Node, adr_home: str) -> str:
@@ -170,9 +243,26 @@ class AdrSource:
         self, node: Node, path: str, dest: Path, *, max_bytes: int | None = None
     ) -> Path:
         res = self.transport_for(node).fetch(path, dest, max_bytes=max_bytes)
-        if res.returncode != 0:
+        if not res.ok:
             raise AdrSourceError(f"fetch {path} failed: {res.stderr[:200]}")
+        if res.truncated:
+            raise AdrSourceError(
+                f"fetch {path} was truncated; refusing to use an incomplete artifact"
+            )
         return dest
+
+    def read_alert(
+        self, node: Node, home: str, cache: Path, *, max_bytes: int = 64 * 1024 * 1024
+    ) -> AlertRead:
+        path = self.alert_log_path(node, home)
+        dest = self.cache_path(cache, node, path)
+        res = self.transport_for(node).fetch_tail(path, dest, max_bytes=max_bytes)
+        if not res.ok:
+            raise AdrSourceError(f"alert tail fetch failed: {res.stderr[:200]}")
+        records = parse_alert_text(dest.read_text(errors="replace"))
+        if res.truncated:
+            records = [r for r in records if r.ts is not None]
+        return AlertRead(records=records, truncated=res.truncated, limit_bytes=max_bytes)
 
     def grep_file(
         self, node: Node, path: str, pattern: str, *, context: int = 3, max_lines: int = 200

@@ -1,5 +1,6 @@
 {% extends "base.html" %}{% block title %}Alert log - {{ t.name }}{% endblock %}{% block content %}
 <h1>Alert log on {{ t.name }} <span class="muted">last {{ hours }} h</span></h1>
+{% if coverage.warning %}<p role="alert">{{ coverage.warning }} Line numbers are relative to the collected tail.</p>{% endif %}
 <form method="get"><label>hours <input name="hours" value="{{ hours }}" size="6"></label> <label>grep <input name="grep" value="{{ grep }}" size="30"></label> <label>context <input name="context" value="{{ context }}" size="3"></label> <button>apply</button></form>
 <div class="row"><div class="col">
 <h2>Statistics</h2>

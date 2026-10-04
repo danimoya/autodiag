@@ -118,6 +118,8 @@ class ScanRow(BaseModel):
 
 class ProblemRow(BaseModel):
     target: str
+    node: str = ""
+    instance: str | None = None
     problem_id: int
     problem_key: str
     adr_home: str = ""
@@ -162,9 +164,25 @@ class CaseStore:
     def _migrate(self) -> None:
         schema = resources.files("autodiag.case").joinpath("schema/001_init.sql").read_text()
         self._conn.executescript(schema)
-        cur = self._conn.execute("SELECT version FROM schema_version")
-        if cur.fetchone() is None:
-            self._conn.execute("INSERT INTO schema_version(version) VALUES (1)")
+        self._conn.execute("BEGIN IMMEDIATE")
+        try:
+            row = self._conn.execute("SELECT version FROM schema_version").fetchone()
+            version = row[0] if row else 1
+            if row is None:
+                self._conn.execute("INSERT INTO schema_version(version) VALUES (1)")
+            if version < 2:
+                migration = (
+                    resources.files("autodiag.case")
+                    .joinpath("schema/002_adr_identity.sql")
+                    .read_text()
+                )
+                for statement in migration.split(";"):
+                    if statement.strip():
+                        self._conn.execute(statement)
+            self._conn.execute("COMMIT")
+        except Exception:
+            self._conn.execute("ROLLBACK")
+            raise
 
     # -- cases -----------------------------------------------------------------------
     def open_case(
@@ -689,34 +707,44 @@ class CaseStore:
     # -- problem / incident snapshots ------------------------------------------------------
     def upsert_problems(self, target: str, problems: list[AdrProblem]) -> list[int]:
         """Store the current problem list; return the ids that were not known before."""
+        return [p.problem_id for p in self.upsert_problem_rows(target, problems)]
+
+    def upsert_problem_rows(self, target: str, problems: list[AdrProblem]) -> list[AdrProblem]:
+        """Return new rows with their full ADR identity (numeric IDs are home-local)."""
         now = _iso(_now())
-        new: list[int] = []
+        new: list[AdrProblem] = []
         for p in problems:
+            node = getattr(p, "node", "")
             known = self._conn.execute(
-                "SELECT 1 FROM problems WHERE target=? AND problem_id=?", (target, p.problem_id)
+                "SELECT 1 FROM problems WHERE target=? AND node=? AND adr_home=? AND problem_id=?",
+                (target, node, p.adr_home, p.problem_id),
             ).fetchone()
             if known:
                 self._conn.execute(
                     "UPDATE problems SET problem_key=?, last_incident=?, lastinc_time=?,"
-                    "last_seen_at=? WHERE target=? AND problem_id=?",
+                    "last_seen_at=? WHERE target=? AND node=? AND adr_home=? AND problem_id=?",
                     (
                         p.problem_key,
                         p.last_incident,
                         _iso(p.lastinc_time),
                         now,
                         target,
+                        node,
+                        p.adr_home,
                         p.problem_id,
                     ),
                 )
             else:
-                new.append(p.problem_id)
+                new.append(p)
                 self._conn.execute(
-                    "INSERT INTO problems(target,problem_id,problem_key,adr_home,"
+                    "INSERT INTO problems(target,node,instance,problem_id,problem_key,adr_home,"
                     "first_incident,last_incident,"
                     "lastinc_time,first_seen_at,last_seen_at)"
-                    " VALUES (?,?,?,?,?,?,?,?,?)",
+                    " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                     (
                         target,
+                        node,
+                        getattr(p, "instance", None),
                         p.problem_id,
                         p.problem_key,
                         p.adr_home,
@@ -736,6 +764,8 @@ class CaseStore:
         return [
             ProblemRow(
                 target=r["target"],
+                node=r["node"],
+                instance=r["instance"],
                 problem_id=r["problem_id"],
                 problem_key=r["problem_key"],
                 adr_home=r["adr_home"],
@@ -753,13 +783,19 @@ class CaseStore:
         n = 0
         for i in incidents:
             self._conn.execute(
-                "INSERT INTO incidents(target,incident_id,problem_id,problem_key,"
+                "INSERT INTO incidents(target,node,adr_home,instance,incident_id,"
+                "problem_id,problem_key,"
                 "create_time,trace_file,"
-                "seen_at) VALUES (?,?,?,?,?,?,?)"
-                " ON CONFLICT(target,incident_id) DO UPDATE SET problem_key=excluded.problem_key,"
-                "trace_file=excluded.trace_file, seen_at=excluded.seen_at",
+                "seen_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
+                " ON CONFLICT(target,node,adr_home,incident_id) DO UPDATE SET "
+                "problem_key=excluded.problem_key, problem_id=excluded.problem_id,"
+                "trace_file=COALESCE(excluded.trace_file,incidents.trace_file),"
+                "create_time=excluded.create_time, seen_at=excluded.seen_at",
                 (
                     target,
+                    getattr(i, "node", ""),
+                    i.adr_home,
+                    getattr(i, "instance", None),
                     i.incident_id,
                     i.problem_id,
                     i.problem_key,

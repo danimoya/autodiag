@@ -134,4 +134,5 @@ python3.11 -m venv .venv
 .venv/bin/pytest -m integration     # needs the testbed container (docs/testbed.md)
 .venv/bin/pytest -m llm             # needs a reachable Ollama
 .venv/bin/ruff check . && .venv/bin/ruff format --check .
+.venv/bin/python scripts/check_dist.py  # sdist -> wheel -> installed resource/CLI checks
 ```

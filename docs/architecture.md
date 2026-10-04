@@ -31,7 +31,7 @@ tool. Every tool result carries an `evidence_id`; findings must cite evidence id
 | `kb/` | YAML knowledge base (ORA-600/7445 keys, alert signatures, wait events, Exadata checks) and lookup |
 | `case/` | SQLite case store: cases, artifacts (hashed copies), evidence, findings, baselines, reports, jobs, problem snapshots |
 | `report/` | timeline merge, environment capture, Jinja2 DBA and SR templates, context builder |
-| `mcp/` | the `autodiag` MCP server: 31 tools with caps, paging, redaction, background jobs, `standard_triage` |
+| `mcp/` | the `autodiag` MCP server: 34 tools with caps, paging, redaction, background jobs, `standard_triage` |
 | `web/` | HTML UI, `/api/v1/tools/<name>` REST endpoint, bearer middleware, MCP mount |
 | `cli/` | `autodiag` command groups: targets, adr, alert, trace, diff, case, report, kb, mcp, serve |
 

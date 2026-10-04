@@ -19,7 +19,6 @@ from fastmcp import FastMCP
 
 from autodiag.adr.source import AdrSource, AdrSourceError
 from autodiag.alertlog.stats import alert_stats
-from autodiag.alertlog.text import parse_alert_text
 from autodiag.alertlog.window import window
 from autodiag.case.store import Case, CaseStore, CaseStoreError
 from autodiag.core.models import Node, Target
@@ -213,12 +212,10 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
 
         return wrapper
 
-    def fetch_alert(t: Target) -> list:
+    def fetch_alert(t: Target):
         src = ctx.source(t)
         node, home = src.primary_ref()
-        dest = ctx.cache_dir(t) / f"alert_{node.instance or 'db'}.log"
-        src.fetch_file(node, src.alert_log_path(node, home), dest, max_bytes=64 * 1024 * 1024)
-        return parse_alert_text(dest.read_text(errors="replace"))
+        return src.read_alert(node, home, ctx.cache_dir(t))
 
     def artifact_text(artifact_id: str) -> str:
         return Path(st.get_artifact(artifact_id).path).read_text(errors="replace")
@@ -316,7 +313,7 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
         t: Target, node: Node, remote: str, case_id: str | None, kind: str
     ) -> tuple[Case, Any]:
         case = st.get_case(case_id) if case_id else ctx.scratch_case(t)
-        dest = ctx.cache_dir(t) / Path(remote).name
+        dest = AdrSource.cache_path(ctx.cache_dir(t), node, remote)
         ctx.source(t).fetch_file(node, remote, dest)
         art = st.add_artifact(
             case.id,
@@ -358,6 +355,7 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
         out = [
             {
                 "problem_id": p.problem_id,
+                "adr_home": p.adr_home,
                 "problem_key": p.problem_key,
                 "last_incident": p.last_incident,
                 "last_time": _fmt(p.lastinc_time),
@@ -380,15 +378,24 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
     @mcp.tool
     @guarded
     def list_incidents(
-        target: str, problem_id: int | None = None, problem_key: str | None = None, limit: int = 50
+        target: str,
+        problem_id: int | None = None,
+        problem_key: str | None = None,
+        limit: int = 50,
+        node: str | None = None,
+        adr_home: str | None = None,
     ) -> dict:
         """Incidents of one ADR problem (by problem_id, or by problem_key which is resolved first)."""
         t = ctx.target(target)
-        rows = ctx.source(t).list_incidents(problem_id=problem_id, problem_key=problem_key)[:limit]
+        rows = ctx.source(t).list_incidents(
+            problem_id=problem_id, problem_key=problem_key, node=node, adr_home=adr_home
+        )[:limit]
         st.upsert_incidents(t.name, rows)
         out = [
             {
                 "incident_id": i.incident_id,
+                "node": i.node,
+                "adr_home": i.adr_home,
                 "problem_key": i.problem_key,
                 "problem_id": i.problem_id,
                 "create_time": _fmt(i.create_time),
@@ -402,21 +409,33 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
         return ok(
             {"incidents": out},
             tool="list_incidents",
-            params={"target": target, "problem_id": problem_id, "problem_key": problem_key},
+            params={
+                "target": target,
+                "problem_id": problem_id,
+                "problem_key": problem_key,
+                "node": node,
+                "adr_home": adr_home,
+            },
             summary=f"{len(out)} incidents",
             target=t,
         )
 
     @mcp.tool
     @guarded
-    def get_incident(target: str, incident_id: int, case_id: str | None = None) -> dict:
+    def get_incident(
+        target: str,
+        incident_id: int,
+        case_id: str | None = None,
+        node: str | None = None,
+        adr_home: str | None = None,
+    ) -> dict:
         """Incident detail from adrci plus the parsed incident trace (fetched into the case as an artifact)."""
         t = ctx.target(target)
         src = ctx.source(t)
-        inc = src.get_incident(incident_id)
+        inc = src.get_incident(incident_id, node=node, adr_home=adr_home)
         if inc is None:
             raise ValueError(f"incident {incident_id} not found on {target}")
-        node = next((n for n in t.nodes if n.instance == inc.instance), t.nodes[0])
+        node = src.incident_node(inc)
         payload: dict[str, Any] = {
             "incident": inc.model_dump(mode="json"),
             "artifact_id": None,
@@ -438,7 +457,12 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
         return ok(
             payload,
             tool="get_incident",
-            params={"target": target, "incident_id": incident_id},
+            params={
+                "target": target,
+                "incident_id": incident_id,
+                "node": inc.node,
+                "adr_home": inc.adr_home,
+            },
             summary=summary,
             target=t,
             case_id=case_ref,
@@ -458,7 +482,8 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
     ) -> dict:
         """Alert-log entries between two ISO timestamps (paged). errors_only keeps ORA-/error entries."""
         t = ctx.target(target)
-        recs = window(fetch_alert(t), _ts(from_ts), _ts(to_ts))
+        read = fetch_alert(t)
+        recs = window(read.records, _ts(from_ts), _ts(to_ts))
         if errors_only:
             recs = [r for r in recs if r.is_error]
         lines = [f"{_fmt(r.ts)} {ln}" for r in recs for ln in r.lines]
@@ -469,6 +494,7 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
             {
                 "lines": page,
                 "total_lines": len(lines),
+                "coverage": read.coverage,
                 "records": len(recs),
                 "ora_codes": sorted({c for r in recs for c in r.ora_codes}),
             },
@@ -476,7 +502,7 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
             params={"target": target, "from_ts": from_ts, "to_ts": to_ts},
             summary=f"{len(recs)} alert entries {from_ts}..{to_ts}",
             target=t,
-            truncated=more,
+            truncated=more or read.truncated,
             next_offset=offset + n if more else None,
         )
 
@@ -508,18 +534,20 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
     def alert_log_stats(target: str, hours: float = 24, top: int = 30) -> dict:
         """Alert-log statistics for the last N hours: ORA histogram, top signatures, per-hour counts, lifecycle events."""
         t = ctx.target(target)
-        recs = fetch_alert(t)
+        read = fetch_alert(t)
+        recs = read.records
         since = datetime.now(UTC) - timedelta(hours=hours)
         sel = window(recs, since, None)
         stats = alert_stats(sel, top=top)
         d = stats.model_dump(mode="json")
         d["per_hour"] = {str(k): v for k, v in stats.per_hour.items()}
         return ok(
-            {"stats": d},
+            {"stats": d, "coverage": read.coverage},
             tool="alert_log_stats",
             params={"target": target, "hours": hours},
             summary=f"{stats.record_count} entries, {stats.incident_count} incidents, ORA codes {stats.ora_counts}",
             target=t,
+            truncated=read.truncated,
         )
 
     @mcp.tool
@@ -529,18 +557,24 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
     ) -> dict:
         """Compare alert-log message rates between a baseline window (a) and an anomaly window (b)."""
         t = ctx.target(target)
-        recs = fetch_alert(t)
+        read = fetch_alert(t)
+        recs = read.records
         a = window(recs, _ts(from_a), _ts(to_a))
         b = window(recs, _ts(from_b), _ts(to_b))
         ha = max((_ts(to_a) - _ts(from_a)).total_seconds() / 3600, 1 / 60)
         hb = max((_ts(to_b) - _ts(from_b)).total_seconds() / 3600, 1 / 60)
         d = _compare_alert_rates(a, b, hours_a=ha, hours_b=hb, top=top)
         return ok(
-            {"diff": d.model_dump(mode="json"), "summary": d.summary_lines()},
+            {
+                "diff": d.model_dump(mode="json"),
+                "summary": d.summary_lines(),
+                "coverage": read.coverage,
+            },
             tool="compare_alert_rates",
             params={"target": target, "a": [from_a, to_a], "b": [from_b, to_b]},
             summary="; ".join(d.summary_lines(5)),
             target=t,
+            truncated=read.truncated,
         )
 
     # ---------------------------------------------------------------- traces
@@ -979,7 +1013,10 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
             f, to = _ts(from_ts), _ts(to_ts)
         else:
             raise ValueError("give case_id or target")
-        recs = window(fetch_alert(t), f, to) if (f or to) else []
+        read = fetch_alert(t) if (f or to) else None
+        if read and read.truncated:
+            raise AdrSourceError(read.coverage["warning"])
+        recs = window(read.records, f, to) if read else []
         events = build_timeline(
             alert_records=recs, incidents=incidents, only_errors=True, max_items=cap(max_items, 200)
         )
@@ -1018,11 +1055,14 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
         problem_id: int | None = None,
         incident_id: int | None = None,
         case_id: str | None = None,
+        node: str | None = None,
+        adr_home: str | None = None,
     ) -> dict:
         """Create and generate an ADRCI IPS package (zip) for a problem or incident; runs as a job, the zip is fetched into the case."""
         t = ctx.target(target)
         if problem_id is None and incident_id is None:
             raise ValueError("give problem_id or incident_id")
+        selected_node, selected_home = ctx.source(t).select_ref(node, adr_home)
         job = st.create_job(
             "ips",
             {
@@ -1030,12 +1070,14 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
                 "problem_id": problem_id,
                 "incident_id": incident_id,
                 "case_id": case_id,
+                "node": selected_node.host,
+                "adr_home": selected_home,
             },
         )
 
         def work(local: CaseStore) -> dict[str, Any]:
             src = ctx.source(t)
-            node, home = src.primary_ref()
+            node, home = selected_node, selected_home
             if problem_id is not None:
                 out = src._run(
                     node, "adrci_ips_create_problem", {"adr_home": home, "problem_id": problem_id}
@@ -1062,7 +1104,7 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
                 raise RuntimeError(f"ips generate did not return a file: {gen[-300:]}")
             remote_zip = zm.group(1).rstrip(",")
             case = local.get_case(case_id) if case_id else ctx.scratch_case(t)
-            dest = ctx.cache_dir(t) / Path(remote_zip).name
+            dest = src.cache_path(ctx.cache_dir(t), node, remote_zip)
             src.fetch_file(node, remote_zip, dest, max_bytes=2 * 1024 * 1024 * 1024)
             art = local.add_artifact(
                 case.id,
@@ -1162,10 +1204,10 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
         frames: list[str] = []
         artifacts: list[str] = []
         for i in incs[:5]:
-            detail = src.get_incident(i.incident_id)  # the brief listing carries no trace path
+            detail = src.get_incident(i.incident_id, node=i.node, adr_home=i.adr_home)
             if detail is None or not detail.trace_file:
                 continue
-            node = next((n for n in t.nodes if n.instance == detail.instance), t.nodes[0])
+            node = src.incident_node(detail)
             _, art = store_fetched(t, node, detail.trace_file, case.id, "incident_trace")
             artifacts.append(art.id)
             if result["newest_incident"] is None:
@@ -1186,9 +1228,11 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
                 incs[0].create_time - timedelta(minutes=30),
                 incs[0].create_time + timedelta(minutes=30),
             )
-            recs = window(fetch_alert(t), f, to)
+            read = fetch_alert(t)
+            recs = window(read.records, f, to)
             errs = [r for r in recs if r.is_error]
             result["alert_window"] = {
+                "coverage": read.coverage,
                 "from_ts": _fmt(f),
                 "to_ts": _fmt(to),
                 "records": len(recs),
@@ -1282,6 +1326,8 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
         record: bool = False,
         max_incidents: int = 5,
         max_bytes: int = 24000,
+        node: str | None = None,
+        adr_home: str | None = None,
     ) -> dict:
         """Automated diagnosis of one ADR problem (by problem_key or one incident_id): every
         incident, parsed traces, stack consistency and diff, alert-log context with noise
@@ -1295,6 +1341,8 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
             mode="problem",
             problem_key=problem_key,
             incident_id=incident_id,
+            node=node,
+            adr_home=adr_home,
             case_id=case_id,
             assess=assess,
             record=record,

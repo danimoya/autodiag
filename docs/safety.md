@@ -11,10 +11,11 @@ how to run it.
   no DDL, DML, `ALTER SYSTEM`, kills, restarts, log deletion or patching.
 - It never executes free-form shell commands or free-form SQL, from any interface, on
   any node: not from the CLI, not from the web UI, not from an agent.
-- It never invents facts. Knowledge-base entries carry My Oracle Support *search strings*,
+- Knowledge-base entries carry My Oracle Support *search strings*,
   never note or bug numbers; the model is instructed to say "unknown"; and a model claim
   that cannot be proven with a quote from the collected evidence is not presented as a
-  finding.
+  finding. Quote matching establishes citation provenance, not the validity of a causal
+  conclusion. Headlines, dismissed items and suggested actions still require DBA review.
 - It never sends stored artifacts to a model: only bounded, redacted excerpts.
 
 The fault-injection kit in `testbed/` is the one place that deliberately damages a
@@ -46,6 +47,7 @@ Connections use `BatchMode=yes` (no password prompts) as the configured user, no
 | `adrci_show_tracefile` | trace files matching a name pattern |
 | `adrci_ips_create_problem`, `adrci_ips_create_incident`, `adrci_ips_generate` | build and zip an IPS package for Oracle Support |
 | `list_dir`, `stat_file`, `read_range`, `grep_file`, `sha256`, `cat_file` | read files under the allowed roots (listing, metadata, byte range, fixed-string grep with context, checksum, full copy into the artifact store) |
+| `tail_file` | read a bounded suffix of an alert log; one extra byte detects omitted history |
 | `opatch_lspatches` | installed interim patches of an ORACLE_HOME |
 | `tfactl_status`, `tfactl_diagcollect`, `tfactl_analyze` | AHF status, collection and analysis for a window |
 | `oswatcher_list` | OSWatcher archive files |
@@ -122,15 +124,17 @@ identifiers.
 
 Closed cases and their artifacts are deleted after `retention_days` (default 90) by
 `autodiag scan purge` or the scheduler; open cases are kept. Fetched files in
-`cache/<target>/` are overwritten on the next fetch of the same name.
+`cache/<target>/<source-hash>/` are overwritten on the next fetch of the same node and
+remote path. Different nodes or paths cannot overwrite each other's cache entry.
 
 ## Operational limits worth knowing
 
 - Timeouts: SSH connect 10 s, SSH commands 120 s (IPS and AHF up to 60 min as jobs),
   SQL 60 s per call, model 300 s. Caps keep a single tool call under 16 KiB by default.
-- Alert logs are fetched up to 64 MiB from the start of the file; on a bigger,
-  never-rotated alert log the newest entries would be missing, so rotate alert logs
-  (ADR purge or logrotate) on the nodes.
+- Alert logs retain up to the newest 64 MiB. When older bytes are omitted, all interfaces
+  expose a coverage warning, and diagnosis records it as evidence. Historical and baseline
+  windows may be incomplete; line numbers are relative to the tail. Truncated trace and
+  package downloads are rejected rather than stored as complete artifacts.
 - The diagnosis runs synchronously in the web UI; a long RAC sweep can take a minute.
 - The severity rules are heuristics tuned on 23ai wording; an unmatched message is
   never dropped, it is shown as informational.

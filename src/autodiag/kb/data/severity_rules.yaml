@@ -1,0 +1,29 @@
+# Alert-log classification used by the diagnosis collectors. Rules are ordered; the first
+# whose regex (case-insensitive) matches the first line of an entry wins. Entries that
+# match no rule are 'info' (never dropped), or 'warning' when they carry an ORA code or
+# an incident. 'noise' entries are counted per signature and summarised, never shown
+# one by one.
+rules:
+  - {pattern: "ORA-00600|ORA-07445", severity: critical, category: internal_error}
+  - {pattern: "Exception \\[type: SIG", severity: critical, category: internal_error}
+  - {pattern: "ORA-00700", severity: warning, category: internal_error}
+  - {pattern: "ORA-04031|ORA-04030|ORA-04036", severity: critical, category: memory}
+  - {pattern: "ORA-01578|Corrupt block|Hex dump of \\(file|ORA-01110|ORA-01115|ORA-27072|ORA-00333|ORA-00353|ORA-00354|ORA-00368|Bad check value|block checksum", severity: critical, category: corruption}
+  - {pattern: "ORA-00257|ORA-16038|ORA-19502|ORA-19504|ORA-19510|ORA-27063|ORA-27061|ORA-27040|ORA-00312|ORA-00313", severity: critical, category: storage}
+  - {pattern: "Instance terminated|terminating the instance|PMON \\(ospid: \\d+\\): terminating|LMON .*terminating|LMD0 .*terminating|ORA-29740|ORA-00494|ORA-00481|ORA-00470|ORA-00472|ORA-00473|ORA-00474|ORA-00476|ORA-00480|ORA-00490|ORA-01092|ORA-04021", severity: critical, category: lifecycle}
+  - {pattern: "ORA-00020|ORA-00018|maximum number of processes|ORA-12516|ORA-12520|ORA-00019", severity: critical, category: connections}
+  - {pattern: "ORA-00060", severity: warning, category: locking}
+  - {pattern: "ORA-01555", severity: warning, category: undo}
+  - {pattern: "checkpoint not complete|cannot allocate new log|Private strand flush not complete|Thread \\d+ cannot allocate new log", severity: warning, category: redo}
+  - {pattern: "ORA-01652|ORA-01653|ORA-01654|ORA-01688|ORA-01691|ORA-01692|ORA-30036|ORA-01650|ORA-01651|ORA-01655", severity: warning, category: space}
+  - {pattern: "ORA-16\\d{3}", severity: warning, category: dataguard}
+  - {pattern: "ORA-15\\d{3}", severity: warning, category: asm}
+  - {pattern: "Reconfiguration started|Reconfiguration complete|IPC Send timeout|gc block lost|Communication with node .* lost|evicted|Evict|ORA-00481|LMS\\d* \\(ospid|GES: Potential blocker", severity: warning, category: rac}
+  - {pattern: "ORA-03136|ORA-03137|TNS-12535|TNS-00505|Fatal NI connect error|ORA-00609|ORA-609\\b|ORA-03113|ORA-03135|ORA-12\\d{3}|TNS-\\d{5}|ORA-00028|ORA-00031", severity: info, category: network}
+  - {pattern: "WARNING: |Warning: ", severity: warning, category: warning}
+  - {pattern: "Errors in file", severity: warning, category: trace}
+  - {pattern: "Incident details in", severity: info, category: trace}
+  - {pattern: "Starting ORACLE instance|Shutting down (the )?instance|Instance shutdown complete|ALTER DATABASE (OPEN|CLOSE|MOUNT|DISMOUNT)|Database mounted|Completed: ALTER DATABASE OPEN|Completed: ALTER DATABASE MOUNT|Database Characterset", severity: info, category: lifecycle}
+  - {pattern: "ALTER SYSTEM SET|ALTER SYSTEM RESET|ALTER SYSTEM (ARCHIVE|CHECKPOINT|SWITCH)|ALTER PLUGGABLE DATABASE|ALTER TABLESPACE|ALTER DATABASE", severity: info, category: config}
+  - {pattern: "Thread \\d+ advanced to log sequence|Current log# |Archived Log entry|Beginning log switch|LGWR switch|ARC\\d+: Archival started|ARC\\d+ started|Waiting for all non-current ORLs", severity: noise, category: redo}
+  - {pattern: "Starting background process|Started background process|Stopping background process|Process startup|TABLE .*: ADDED INTERVAL PARTITION|Setting Resource Manager plan|Closing scheduler window|Opening scheduler window|Use ADRCI or Support Workbench|See Note \\d+\\.\\d+ at My Oracle Support|Dumping current patch information|No patches have been applied|Opening pdb with Resource Manager|opened read write|Completed: Pluggable database|^=+$|Endian type|Dumping diagnostic data|QMNC started|Adjusting the requested value|Resize operation completed|Autotune of undo retention|JIT: pid|Shared IO Pool|Completed: alter database|Completed: ALTER PLUGGABLE|Completed: ALTER SYSTEM|Deleted Oracle managed file|Archivelog|Pluggable database .* closed|Domain Action Reconfiguration", severity: noise, category: routine}

@@ -1,6 +1,7 @@
 import typer
 
 from autodiag.cli import common
+from autodiag.core.http import http_middleware
 from autodiag.mcp.server import build_server, default_context
 
 app = typer.Typer(help="Run the MCP server (stdio for a local agent, HTTP for the shared service).")
@@ -30,6 +31,7 @@ def http(
         host=host or s.listen_host,
         port=port or s.listen_port,
         path="/mcp",
+        middleware=http_middleware(s.mcp_token),
         show_banner=False,
     )
 

@@ -22,13 +22,12 @@ from fastapi.responses import (
     Response,
 )
 from jinja2 import Environment, FunctionLoader, select_autoescape
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from autodiag import __version__
 from autodiag.alertlog.stats import alert_stats
-from autodiag.alertlog.text import parse_alert_text
 from autodiag.alertlog.window import grep_records, window
 from autodiag.case.store import CaseStoreError
+from autodiag.core.http import BearerMiddleware
 from autodiag.diff.callstack import compare_stacks, stack_from_incident
 from autodiag.diff.sqlprofile import compare_profiles
 from autodiag.mcp.server import AutoDiagContext, build_server
@@ -58,22 +57,6 @@ def _env() -> Environment:
     env.filters["pct"] = lambda v: f"{round(float(v) * 100)}%"
     env.filters["json"] = lambda v: json.dumps(v, indent=2, default=str)
     return env
-
-
-class BearerMiddleware(BaseHTTPMiddleware):
-    """Protects /api and /mcp with a static bearer token when one is configured."""
-
-    def __init__(self, app, token: str | None) -> None:
-        super().__init__(app)
-        self.token = token
-
-    async def dispatch(self, request: Request, call_next):
-        path = request.url.path
-        if self.token and (path.startswith("/api/") or path == "/mcp" or path.startswith("/mcp/")):
-            auth = request.headers.get("authorization", "")
-            if auth != f"Bearer {self.token}":
-                return JSONResponse({"error": "unauthorized"}, status_code=401)
-        return await call_next(request)
 
 
 def create_app(ctx: AutoDiagContext) -> FastAPI:
@@ -150,9 +133,11 @@ def create_app(ctx: AutoDiagContext) -> FastAPI:
         return render("problems.html", t=t, problems=rows, days=days)
 
     @app.get("/targets/{name}/problems/{problem_id}", response_class=HTMLResponse)
-    def incidents_page(name: str, problem_id: int) -> HTMLResponse:
+    def incidents_page(
+        name: str, problem_id: int, node: str | None = None, adr_home: str | None = None
+    ) -> HTMLResponse:
         t = ctx.target(name)
-        rows = ctx.source(t).list_incidents(problem_id=problem_id)
+        rows = ctx.source(t).list_incidents(problem_id=problem_id, node=node, adr_home=adr_home)
         return render(
             "incidents.html",
             t=t,
@@ -206,16 +191,22 @@ def create_app(ctx: AutoDiagContext) -> FastAPI:
         t = ctx.target(name)
         src = ctx.source(t)
         node, home = src.primary_ref()
-        dest = ctx.cache_dir(t) / f"alert_{node.instance or 'db'}.log"
-        src.fetch_file(node, src.alert_log_path(node, home), dest, max_bytes=64 * 1024 * 1024)
-        recs = parse_alert_text(dest.read_text(errors="replace"))
+        read = src.read_alert(node, home, ctx.cache_dir(t))
+        recs = read.records
         from datetime import UTC, timedelta
 
         sel = window(recs, datetime.now(UTC) - timedelta(hours=hours), None)
         stats = alert_stats(sel, top=top)
         hits = grep_records(sel, grep, context=context, max_hits=200) if grep else []
         return render(
-            "alertlog.html", t=t, hours=hours, grep=grep, context=context, stats=stats, hits=hits
+            "alertlog.html",
+            t=t,
+            hours=hours,
+            grep=grep,
+            context=context,
+            stats=stats,
+            hits=hits,
+            coverage=read.coverage,
         )
 
     # ------------------------------------------------------------------ cases
