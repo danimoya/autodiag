@@ -1,0 +1,123 @@
+# Curated meanings of common ORA-600 first arguments. No My Oracle Support note numbers
+# are recorded here (they cannot be verified offline); use "mos_search" to look them up.
+generic:
+  title: "ORA-600 internal error"
+  meaning: >-
+    An internal consistency check in the Oracle kernel failed. The first argument names
+    the check; the remaining arguments are context values. ORA-600 is a software or
+    corruption condition, not an application error.
+  checks:
+    - "Read the incident trace: current SQL, PL/SQL stack, first application frame after the error-handling prelude"
+    - "Count incidents per problem key over time (one-off vs recurring); check flood control"
+    - "Check whether all incidents share the same call stack (stack frequency)"
+    - "Compare the patch level (opatch lspatches / DBA_REGISTRY_SQLPATCH) with the latest Release Update"
+    - "Look for related alert-log messages seconds before the incident (corruption, memory, redo)"
+  actions:
+    - "Search My Oracle Support for the exact problem key and the first application frame"
+    - "If reproducible, capture a test case; otherwise package the incident with ADRCI IPS for an SR"
+    - "Apply the current Release Update / known one-off patch if a matching bug exists"
+entries:
+  - match: "ORA 600 [4194]"
+    title: "Undo record mismatch while applying undo"
+    meaning: "Undo block content does not match what redo expects; typically undo/rollback segment corruption after a crash or lost write."
+    typical_causes: ["undo tablespace corruption", "lost writes on undo datafiles", "incomplete recovery"]
+    checks: ["alert log for ORA-1578 / lost write / media recovery messages", "DBV on the undo datafiles", "which rollback segment is named in the trace"]
+    actions: ["do not restart repeatedly; involve Oracle Support with the incident package", "recovery of the undo tablespace may be needed"]
+    severity: critical
+    mos_search: "ORA-600 [4194] undo"
+  - match: "ORA 600 [4193]"
+    title: "Undo record seq# mismatch"
+    meaning: "Sequence number in an undo block differs from the expected one; undo corruption."
+    typical_causes: ["undo corruption", "lost write"]
+    checks: ["as for ORA-600 [4194]"]
+    actions: ["as for ORA-600 [4194]"]
+    severity: critical
+    mos_search: "ORA-600 [4193]"
+  - match: "ORA 600 [kcbz"
+    title: "Buffer cache block check failure"
+    meaning: "A block read into the buffer cache failed a consistency check (kcbz* functions); often physical corruption or an I/O layer fault."
+    typical_causes: ["physical block corruption", "storage / cell I/O errors", "memory corruption"]
+    checks: ["RMAN VALIDATE / DBV of the file named in the trace", "cell alert history and OS messages around the time", "V$DATABASE_BLOCK_CORRUPTION"]
+    actions: ["repair corruption with RMAN block media recovery", "open an SR with the incident package if blocks validate clean"]
+    severity: high
+    mos_search: "ORA-600 kcbz"
+  - match: "ORA 600 [kgl"
+    title: "Library cache internal error"
+    meaning: "Inconsistency in the library cache (cursors, object handles). Often triggered by concurrent DDL, invalidation storms or a known bug."
+    typical_causes: ["known bug in the release", "aggressive DDL or grants on hot objects", "shared pool pressure"]
+    checks: ["identify the object / SQL in the current SQL section", "recent DDL on that object", "shared pool free memory and ORA-4031 history"]
+    actions: ["search the bug database for the problem key", "flush the shared pool only as a mitigation", "apply the matching patch"]
+    severity: high
+    mos_search: "ORA-600 kgl"
+  - match: "ORA 600 [kks"
+    title: "Shared cursor internal error"
+    meaning: "Cursor sharing / child cursor management failed a consistency check."
+    typical_causes: ["known bug", "high version count cursors", "cursor invalidation storms"]
+    checks: ["V$SQL_SHARED_CURSOR for the sql_id", "version count of the cursor", "recent statistics or DDL changes"]
+    actions: ["purge the cursor with DBMS_SHARED_POOL.PURGE as a mitigation", "search the bug database with the problem key"]
+    severity: medium
+    mos_search: "ORA-600 kks"
+  - match: "ORA 600 [kdsgrp"
+    title: "Row not found in data block (kdsgrp1)"
+    meaning: "A row expected in a block (from an index) was not there: index/table mismatch or logical corruption."
+    typical_causes: ["logical corruption", "lost write", "index out of sync with table"]
+    checks: ["ANALYZE TABLE ... VALIDATE STRUCTURE CASCADE for the object", "recent lost-write / media errors"]
+    actions: ["rebuild the affected index if validate structure reports mismatch", "open an SR if the table itself is corrupt"]
+    severity: high
+    mos_search: "ORA-600 [kdsgrp1]"
+  - match: "ORA 600 [qer"
+    title: "Row source execution internal error"
+    meaning: "An execution engine row source hit an unexpected state; usually plan-specific and bug related."
+    typical_causes: ["optimizer/plan bug", "adaptive features", "specific SQL shape"]
+    checks: ["current SQL and its plan", "does a different plan (hint, outline) avoid it", "optimizer parameters recently changed"]
+    actions: ["work around with a SQL patch / hint after confirming", "search the bug database with problem key and plan operation"]
+    severity: medium
+    mos_search: "ORA-600 qer"
+  - match: "ORA 600 [ksm"
+    title: "Shared memory management internal error"
+    meaning: "SGA memory management (ksm*) failed a check; memory corruption or resize race."
+    typical_causes: ["memory corruption", "SGA resize bug", "hardware memory faults"]
+    checks: ["OS memory errors (EDAC / mcelog)", "recent SGA resize operations in the alert log"]
+    actions: ["disable automatic SGA resizing as a mitigation if resizes correlate", "SR with incident package"]
+    severity: high
+    mos_search: "ORA-600 ksm"
+  - match: "ORA 600 [kcr"
+    title: "Redo layer internal error"
+    meaning: "Redo generation or log writer consistency check failed."
+    typical_causes: ["redo log corruption", "storage write errors", "bug"]
+    checks: ["alert log for log file errors and log switch problems", "V$LOG / V$LOGFILE status"]
+    actions: ["do not clear logs without Oracle Support guidance", "SR with incident package"]
+    severity: critical
+    mos_search: "ORA-600 kcr"
+  - match: "ORA 600 [kjb"
+    title: "RAC global cache internal error"
+    meaning: "Global Cache Service (GCS/LMS) hit an inconsistent state; RAC-specific."
+    typical_causes: ["interconnect problems", "instance eviction race", "bug"]
+    checks: ["LMS/LMD traces on all nodes at the same time", "interconnect errors and reconfiguration messages", "other nodes' incidents with the same timestamp"]
+    actions: ["collect AHF diagcollect across all nodes", "SR with all nodes' packages"]
+    severity: high
+    mos_search: "ORA-600 kjb"
+  - match: "ORA 600 [17"
+    title: "Heap / memory manager check (17xxx family)"
+    meaning: "Heap consistency checks (kgh*) failed: PGA/UGA/SGA heap corruption, frequently caused by a bug in another component overwriting memory."
+    typical_causes: ["memory overwrite bug", "PL/SQL or Java component bugs", "faulty memory"]
+    checks: ["heap dump in the trace names the corrupted chunk", "which component allocated it (comment in the chunk)"]
+    actions: ["search the bug database with the argument list", "SR with incident package"]
+    severity: high
+    mos_search: "ORA-600 [17"
+  - match: "ORA 600 [2662]"
+    title: "Block SCN ahead of current SCN"
+    meaning: "A block has an SCN higher than the database SCN; typical after restoring an inconsistent backup or a lost write."
+    typical_causes: ["inconsistent recovery", "lost write", "controlfile/datafile SCN mismatch"]
+    checks: ["how the database was last recovered", "alert log for lost write detection"]
+    actions: ["involve Oracle Support; SCN adjustments must not be improvised"]
+    severity: critical
+    mos_search: "ORA-600 [2662]"
+  - match: "ORA 600 [kdb"
+    title: "Data block layer check failure"
+    meaning: "Block layout inconsistency detected while reading or modifying a data block."
+    typical_causes: ["block corruption", "lost write"]
+    checks: ["RMAN VALIDATE of the file/block in the trace", "ANALYZE ... VALIDATE STRUCTURE"]
+    actions: ["block media recovery", "SR if corruption recurs"]
+    severity: high
+    mos_search: "ORA-600 kdb"

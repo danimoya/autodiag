@@ -28,10 +28,11 @@ def scan_target(ctx: AutoDiagContext, target: Target, *, days: int = 7) -> ScanR
     scan_id = ctx.store.start_scan(target.name, res.started_at)
     try:
         problems = ctx.source(target).list_problems(days=days)
-        new_ids = ctx.store.upsert_problems(target.name, problems)
+        new_rows = ctx.store.upsert_problem_rows(target.name, problems)
+        new_ids = [p.problem_id for p in new_rows]
         res.problem_count = len(problems)
         res.new_problem_ids = new_ids
-        res.new_problem_keys = [p.problem_key for p in problems if p.problem_id in new_ids]
+        res.new_problem_keys = list(dict.fromkeys(p.problem_key for p in new_rows))
     except Exception as exc:  # noqa: BLE001 - an unreachable target must not stop the scan
         res.error = f"{type(exc).__name__}: {exc}"
     res.finished_at = datetime.now(UTC).replace(microsecond=0)

@@ -1,0 +1,30 @@
+# ExaCC-specific checks the playbook can suggest when platform=exacc.
+checks:
+  - id: smart_scan_efficiency
+    title: "Smart scan offload efficiency"
+    how: "run_query exa_offload_by_sql; compare io_cell_offload_eligible_bytes with io_interconnect_bytes per sql_id"
+    interpret: "eligible bytes high but interconnect bytes close to eligible = little offload benefit (predicates not offloadable, chained rows, LOBs)"
+  - id: cell_waits
+    title: "Cell wait events dominate?"
+    how: "run_query exa_cell_events; compare cell single block physical read latency (average_wait_ms) with expectations (< 1 ms from flash)"
+    interpret: "high average single-block latency points to flash cache misses or cell load; multiblock reads not turning into smart scans point to buffered scans"
+  - id: ahf_collect
+    title: "Collect AHF diagnostics around the incident"
+    how: "collect_ahf(target, from, to) (tfactl diagcollect); tfactl analyze for the window"
+    interpret: "AHF correlates DB, GI, OS (OSWatcher) and cell data; attach the zip to the SR"
+  - id: exachk
+    title: "Exachk / orachk findings"
+    how: "review the latest exachk HTML for FAIL / WARNING items related to the symptom (memory, huge pages, patches)"
+    interpret: "known-issue checks often explain ORA-600/7445 on specific RU levels"
+  - id: patch_level
+    title: "Patch level vs recommended"
+    how: "capture_environment (opatch lspatches, DBA_REGISTRY_SQLPATCH)"
+    interpret: "compare with the latest Release Update and Exadata bundle; many ORA-600/7445 keys map to fixed bugs"
+  - id: rac_correlation
+    title: "Same problem key on other nodes?"
+    how: "list_problems for every node; compare timestamps"
+    interpret: "simultaneous incidents on all nodes suggest shared storage/interconnect/cluster events; single-node suggests local memory or a workload on that node"
+  - id: oswatcher
+    title: "OSWatcher around the incident"
+    how: "tfactl / oswatcher archives for the minutes before: memory, swap, run queue, network errors"
+    interpret: "OS memory pressure or CPU starvation explains ORA-4030/4031, ORA-800 and LGWR/VKTM warnings"

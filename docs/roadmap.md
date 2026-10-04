@@ -1,21 +1,56 @@
 # Roadmap and known gaps
 
-Status of the plan's phases as of the first public release: phases 0 to 6 are complete
-and the v1 items of phase 7 (environment capture, timeline, Exadata queries, baselines,
-retention, scheduled scans with notifications, golden evals) are in place.
+Reviewed against source and tests on 2026-10-04. The package version is **0.1.0**;
+earlier v1.0/v1.1 phase labels were planning labels, not package releases.
 
-## Pending v1.1
+## Implemented
+
+- ADR collection, trace parsers, stack/10046/alert-rate comparisons, SQL catalog,
+  cases and evidence, DBA/SR reports, environment capture and baselines.
+- CLI, web/REST, **34 MCP tools**, OpenCode integration, scheduled scans,
+  notifications and retention.
+- Automated `diagnose problem|alert|instance`: bounded dossier, noise suppression,
+  direct Ollama assessment, quote verification and an explicit rules fallback.
+- RAC alert correlation within two minutes and grouping ADR problems by problem key.
+  Individual incident sequences are not yet correlated by time across instances.
+- Oracle Free 23ai container with real ORA-600/700/7445, deadlock, hang and SQL-trace
+  material, parser tests and evaluation scenarios.
+
+## Reliability corrections implemented
+
+| Priority | Correction | Verification |
+|---|---|---|
+| 1 | Knowledge-base YAML and model prompt included in source/wheel distributions; root-only data ignore rule | Build sdist, build wheel from sdist, install outside source tree, load resources and invoke CLI; CI runs this check |
+| 2 | Shared bearer middleware for `serve` and standalone `mcp http` | Missing/incorrect tokens rejected; authenticated MCP initialization succeeds |
+| 2 | Redact node labels, omitted titles and noise metadata; enforce the complete prompt's UTF-8 byte budget | Synthetic sensitive data across prompt sections and small/multibyte budgets |
+| 3 | Store identity as target + node + ADR home + numeric ID; explicit selectors, ambiguity rejection, isolated cache paths | Colliding IDs, selected-node lookups, preserved v1 records and repeatable schema migration |
+| 3 | Read newest alert bytes and expose omitted-history coverage; reject truncated trace/package artifacts | Recent error retained from a >64 MiB sparse log; coverage exposed in CLI, MCP, GUI and diagnosis |
+
+Case databases migrate to schema version 2 on opening. Back up the database and restart
+all processes using it together when upgrading. Legacy snapshots retain unknown node/home
+fields as empty strings; migration cannot reconstruct discarded origins or recover records
+already overwritten by ID collisions.
+
+## Next work, in priority order
+
+1. **Real-estate validation:** anonymised 19c traces and alert logs, real RAC/ExaCC
+   integration coverage, severity-rule tuning, per-target rule overrides and ASH
+   timezone alignment. The container is single-instance 23ai; mocked multi-node tests
+   do not establish real RAC compatibility.
+2. **Collection and workflow:** asynchronous web diagnosis, historical alert-log
+   rotation/window retrieval, and `diagnose sql` for paired 10046 traces.
+3. **Diagnostic integrations:** complete the partial collectors below.
 
 | Item | Notes |
 |---|---|
 | AHF ingestion | `collect_ahf` runs `tfactl diagcollect` as a job; parsing `tfactl analyze` output and attaching the collection zip to the case is not done. |
 | exachk / orachk ingestion | Summarise FAIL / WARNING items from the HTML or JSON report into the case. |
-| OSWatcher window extraction | `oswatcher_list` / `oswatcher_read` are allowlisted; the parser for vmstat / ps / netstat archives around an incident time is not written. |
-| RAC cross-instance correlation | `list_problems` runs per node; grouping the same problem key across instances by time and flagging simultaneous incidents is pending. |
+| OSWatcher window extraction | `oswatcher_list` is allowlisted; no dedicated `oswatcher_read` exists. Add window extraction and vmstat/ps/netstat parsers. |
+| RAC incident correlation | Time-correlate incidents across homes; key grouping and alert correlation already exist. |
 | "Investigate with OpenCode" button | The web UI does not yet spawn `opencode run --agent autodiag-triage` for a case. |
-| Direct-Ollama `autodiag advise` | Non-interactive summary of a case without an agent runtime. |
-| ORA-4031 / ORA-4030 fault scripts | Best effort scripts exist as placeholders in the kit; not validated. |
-| IPS job on RAC | `create_ips_package` uses the first node; per-instance packaging for RAC is pending. |
+| Case-level `autodiag advise` | Summarise an existing case; direct Ollama assessment already works through `diagnose`. |
+| ORA-4031 / ORA-4030 fault scripts | Write and validate these scripts; no placeholders exist in the kit. |
+| RAC IPS orchestration | Explicit node/home selection now packages one chosen home and rejects ambiguity. Automatic packaging/aggregation across homes remains pending. |
 | dbaascli patch inventory | Allowlist entry planned (`dbaascli_patch_list`); needs `opc` + sudo on ExaCC. |
 | Embeddings over KB and findings | Optional similarity search using an embedding model. |
 
@@ -36,15 +71,33 @@ retention, scheduled scans with notifications, golden evals) are in place.
 - **Redaction heuristics**: bind values, string literals, IPs, e-mails and host names are
   masked at the model boundary; dotted SQL identifiers and versions are preserved by
   heuristics that may occasionally misclassify an unusual token.
-- **OpenCode version pin**: the integration was verified with OpenCode 1.18.x; the config
-  directory conventions may change in the v2 line.
+- **Evidence interpretation**: quote verification checks citation text exists, not causal
+  validity. Headlines, dismissals and suggested actions are not independently verified.
+- **Alert history**: reads retain the newest 64 MiB and report omitted history explicitly.
+  Historical/baseline windows can be incomplete; tail line numbers are relative to the
+  collected tail. Timeline construction refuses truncated history.
+- **OpenCode compatibility**: integration is exercised with 1.18.x. Model identifiers must
+  exist in `opencode models`; `AUTODIAG_EVAL_OPENCODE_MODEL` overrides the eval default.
 
+## Live verification on 2026-10-04
 
-## Delivered after v1.0
+- Default regression suite: 212 passed; the 13 live tests are excluded by default.
+  Distribution install smoke, lint, formatting and repository hygiene checks passed.
+- All 11 Oracle integration checks passed against the Oracle Free 23ai Docker testbed:
+  SSH/ADR, incident/trace roundtrip, alert logs, SQL*Net, PDB switching, ASH and diagnosis.
+- The configured 27B Ollama model produced a verified assessment of the repeated ORA-600.
+- OpenCode 1.18.32 completed the MCP investigation using `deepseek/deepseek-flash`.
+  Its first run failed because the configured `deepseek/deepseek-v4-flash` identifier no
+  longer appeared in the client's model catalog. An explicit test override fixed the run.
+- Live runs used temporary case storage. These results do not validate 19c or real RAC.
 
-- Automated diagnosis (`autodiag diagnose problem|alert|instance`, MCP `diagnose_*`, UI
-  button): rule-based noise suppression, bounded dossier, model assessment with verified
-  proofs, rules fallback. Pending refinements: tune `severity_rules.yaml` on real ExaCC
-  alert logs (19c wording), per-target rule overrides, asynchronous diagnosis in the web
-  UI, ASH time-zone alignment, a `diagnose sql` mode for 10046 pairs.
-- Alert-log fetch is capped at the first 64 MiB; read the tail (or use `adrci_show_alert_tail`) for huge unrotated logs.
+```bash
+.venv/bin/pytest -q
+.venv/bin/python scripts/check_dist.py
+.venv/bin/pytest -v -m integration
+.venv/bin/pytest -v -m llm
+.venv/bin/ruff check . && .venv/bin/ruff format --check .
+```
+
+Set `AUTODIAG_DATA_DIR` to a temporary directory for live evaluations to keep test cases
+separate from operational cases. Default tests exclude live Oracle and LLM checks.

@@ -53,6 +53,8 @@ def diagnose(
     target: str,
     problem_key: str | None = None,
     incident_id: int | None = None,
+    node: str | None = None,
+    adr_home: str | None = None,
     hours: float = 24.0,
     since: datetime | None = None,
     until: datetime | None = None,
@@ -85,6 +87,8 @@ def diagnose(
             case_id=case.id,
             problem_key=problem_key,
             incident_id=incident_id,
+            node=node,
+            adr_home=adr_home,
             max_incidents=max_incidents,
             window_minutes=window_minutes,
         )

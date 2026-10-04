@@ -7,13 +7,11 @@ import math
 import re
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import Any
 
-from autodiag.adr.source import AdrSourceError, IncidentRow, ProblemRow
+from autodiag.adr.source import AdrSourceError, AlertRead, IncidentRow, ProblemRow
 from autodiag.alertlog.models import AlertRecord
 from autodiag.alertlog.stats import alert_stats
-from autodiag.alertlog.text import parse_alert_text
 from autodiag.alertlog.window import window
 from autodiag.core.models import Node, Platform, Target, TargetKind
 from autodiag.diagnose.models import Dossier, DossierItem, Severity
@@ -80,7 +78,7 @@ class Collector:
         self.st = ctx.store
         self.src = ctx.source(target)
         self.now = datetime.now(UTC).replace(microsecond=0)
-        self._alert_cache: dict[str, list[AlertRecord]] = {}
+        self._alert_cache: dict[str, AlertRead] = {}
         self._runner: Any = None
         self._runner_tried = False
 
@@ -192,14 +190,12 @@ class Collector:
         return rows
 
     # -- alert log ---------------------------------------------------------------------
-    def alert_records(self, node: Node, home: str) -> list[AlertRecord]:
+    def alert_records(self, node: Node, home: str) -> AlertRead:
         key = node.ssh_target + ":" + home
         if key not in self._alert_cache:
-            dest = self.ctx.cache_dir(self.t) / f"alert_{node.instance or 'db'}.log"
-            self.src.fetch_file(
-                node, self.src.alert_log_path(node, home), dest, max_bytes=ALERT_FETCH_MAX
+            self._alert_cache[key] = self.src.read_alert(
+                node, home, self.ctx.cache_dir(self.t), max_bytes=ALERT_FETCH_MAX
             )
-            self._alert_cache[key] = parse_alert_text(dest.read_text(errors="replace"))
         return self._alert_cache[key]
 
     def sweep_into(
@@ -314,7 +310,21 @@ class Collector:
         label: str = "",
         with_context: bool = True,
     ) -> list[KeptRecord]:
-        recs = self.alert_records(node, home)
+        read = self.alert_records(node, home)
+        recs = read.records
+        if read.truncated:
+            warning = read.coverage["warning"]
+            d.errors.append(f"{_label(node)}: {warning}")
+            self.add(
+                d,
+                kind="coverage",
+                severity=Severity.WARNING,
+                category="collection",
+                title=f"Incomplete alert-log history on {_label(node)}",
+                text=warning,
+                node=_label(node),
+                refs=read.coverage,
+            )
         cur = window(recs, since, until)
         prev = window(recs, since - (until - since), since)
         res = self.sweep_into(d, cur, previous=prev, node=_label(node), label=label)
@@ -456,12 +466,16 @@ class Collector:
     def incident_into(
         self, d: Dossier, inc: IncidentRow
     ) -> tuple[DossierItem | None, IncidentTrace | None]:
-        detail = self.src.get_incident(inc.incident_id) if not inc.trace_file else inc
+        detail = (
+            self.src.get_incident(inc.incident_id, node=inc.node, adr_home=inc.adr_home)
+            if not inc.trace_file
+            else inc
+        )
         if detail is None or not detail.trace_file:
             d.errors.append(f"incident {inc.incident_id}: no trace file known")
             return None, None
-        node = next((n for n in self.t.nodes if n.instance == detail.instance), self.t.nodes[0])
-        dest = self.ctx.cache_dir(self.t) / Path(detail.trace_file).name
+        node = self.src.incident_node(detail)
+        dest = self.src.cache_path(self.ctx.cache_dir(self.t), node, detail.trace_file)
         try:
             self.src.fetch_file(node, detail.trace_file, dest)
         except AdrSourceError as exc:
@@ -476,6 +490,7 @@ class Collector:
                 "node": node.host,
                 "remote": detail.trace_file,
                 "incident_id": inc.incident_id,
+                "adr_home": inc.adr_home,
             },
         )
         doc = parse_trace(dest.read_text(errors="replace"))
@@ -604,20 +619,34 @@ def collect_problem(
     case_id: str,
     problem_key: str | None = None,
     incident_id: int | None = None,
+    node: str | None = None,
+    adr_home: str | None = None,
     max_incidents: int = 5,
     window_minutes: int = 30,
 ) -> Dossier:
     c = Collector(ctx, target, case_id=case_id)
     src = c.src
-    if incident_id is not None and problem_key is None:
-        inc = src.get_incident(incident_id)
+    selected_incident = None
+    if incident_id is not None:
+        inc = src.get_incident(incident_id, node=node, adr_home=adr_home)
         if inc is None:
             raise AdrSourceError(f"incident {incident_id} not found on {target.name}")
+        if problem_key is not None and problem_key != inc.problem_key:
+            raise AdrSourceError("incident_id does not belong to problem_key")
         problem_key = inc.problem_key
+        selected_incident = inc
     if not problem_key:
         raise AdrSourceError("problem_key or incident_id is required")
-    d = c.new_dossier("problem", {"problem_key": problem_key, "incident_id": incident_id})
-    incs = src.list_incidents(problem_key=problem_key)
+    d = c.new_dossier(
+        "problem",
+        {
+            "problem_key": problem_key,
+            "incident_id": incident_id,
+            "node": node,
+            "adr_home": adr_home,
+        },
+    )
+    incs = src.list_incidents(problem_key=problem_key, node=node, adr_home=adr_home)
     c.st.upsert_incidents(target.name, incs)
     stamped = [i.create_time for i in incs if i.create_time]
     first, last = (min(stamped), max(stamped)) if stamped else (None, None)
@@ -650,8 +679,12 @@ def collect_problem(
     chosen = incs[:max_incidents]
     if len(incs) > max_incidents:
         chosen = [*incs[: max_incidents - 1], incs[-1]]  # newest ones plus the oldest
-    if incident_id is not None and incident_id not in {i.incident_id for i in chosen}:
-        chosen = [i for i in incs if i.incident_id == incident_id] + chosen[:-1]
+    if selected_incident is not None and not any(
+        (i.node, i.adr_home, i.incident_id)
+        == (selected_incident.node, selected_incident.adr_home, selected_incident.incident_id)
+        for i in chosen
+    ):
+        chosen = [selected_incident] + chosen[:-1]
     docs: list[tuple[IncidentRow, IncidentTrace]] = []
     for inc in chosen:
         _, doc = c.incident_into(d, inc)
@@ -716,7 +749,7 @@ def collect_problem(
         seen_nodes: set[str] = set()
         kept_by_node: dict[str, list[KeptRecord]] = {}
         for inc in incs[:3]:
-            node = next((n for n in target.nodes if n.instance == inc.instance), target.nodes[0])
+            node = src.incident_node(inc)
             if node.ssh_target in seen_nodes or not inc.create_time:
                 continue
             seen_nodes.add(node.ssh_target)

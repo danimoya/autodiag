@@ -196,6 +196,13 @@ ALLOWLIST: dict[str, CommandSpec] = {
         timeout=600,
         max_bytes=512 * 1024 * 1024,
     ),
+    "tail_file": CommandSpec(
+        ("tail", "-c", "{length}", "--", "{path}"),
+        {"path": _v_path, "length": _v_int},
+        "Read the newest bytes of an alert log",
+        timeout=120,
+        max_bytes=64 * 1024 * 1024 + 1,
+    ),
     "opatch_lspatches": CommandSpec(
         ("{oracle_home}/OPatch/opatch", "lspatches"),
         {"oracle_home": _v_path},

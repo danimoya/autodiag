@@ -168,6 +168,8 @@ def add_evidence(
 def collect_incident(
     case_id: str,
     incident_id: int = typer.Option(..., "--id", help="ADR incident id."),
+    node: str = typer.Option(None, "--node", help="Node host, SSH alias or instance."),
+    adr_home: str = typer.Option(None, "--adr-home", help="ADR home of the incident."),
     as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
 ) -> None:
     """Fetch an incident's trace from the case's target, store it as an artifact, parse it and
@@ -177,12 +179,12 @@ def collect_incident(
     c = st.get_case(case_id)
     t = common.target(c.target, s)
     src = common.source(t, s)
-    inc = src.get_incident(incident_id)
+    inc = src.get_incident(incident_id, node=node, adr_home=adr_home)
     if inc is None or not inc.trace_file:
         typer.echo(f"incident {incident_id} not found on {c.target}", err=True)
         raise typer.Exit(code=1)
-    node = next((n for n in t.nodes if n.instance == inc.instance), t.nodes[0])
-    dest = common.cache_dir(s, t) / Path(inc.trace_file).name
+    node = src.incident_node(inc)
+    dest = src.cache_path(common.cache_dir(s, t), node, inc.trace_file)
     src.fetch_file(node, inc.trace_file, dest)
     a = st.add_artifact(
         c.id,

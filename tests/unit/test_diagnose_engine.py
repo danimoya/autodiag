@@ -183,3 +183,19 @@ def test_bad_mode_and_missing_key(ctx) -> None:
 
     with pytest.raises(AdrSourceError):
         diagnose(ctx, mode="problem", target="testbed", assess=False)
+
+
+def test_truncated_alert_history_is_visible_in_diagnosis(ctx, monkeypatch):
+    from autodiag.adr.source import AdrSource
+
+    original = AdrSource.read_alert
+
+    def limited(self, *args, **kw):
+        return original(self, *args, **kw).model_copy(update={"truncated": True})
+
+    monkeypatch.setattr(AdrSource, "read_alert", limited)
+    d = diagnose(ctx, mode="alert", target="testbed", assess=False)
+    assert any(
+        i.kind == "coverage" and i.severity_hint == Severity.WARNING for i in d.dossier.items
+    )
+    assert any("omitted" in e for e in d.dossier.errors)

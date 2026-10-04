@@ -1,0 +1,30 @@
+# Wait events -> what they mean and what to check; includes Exadata cell events.
+events:
+  "enq: TX - row lock contention": {meaning: "Session waits for a row lock held by another transaction", checks: ["blocking session and its SQL", "uncommitted long transactions", "application lock ordering"]}
+  "enq: TM - contention": {meaning: "Table-level lock wait; classic cause is DML on a child table without an index on the foreign key", checks: ["unindexed foreign keys", "DDL on the table"]}
+  "db file sequential read": {meaning: "Single-block read (index access, row fetch)", checks: ["I/O latency per read", "buffer cache hit for the object", "plan doing too many index lookups"]}
+  "db file scattered read": {meaning: "Multi-block read (full scan) into the buffer cache", checks: ["unexpected full scans", "db_file_multiblock_read_count"]}
+  "direct path read": {meaning: "Full scan read directly into PGA (serial direct read / smart scan candidate)", checks: ["object size vs _small_table_threshold", "on Exadata: was it offloaded (cell smart table scan)?"]}
+  "cell single block physical read": {meaning: "Exadata single-block read served by a cell", checks: ["flash cache hit ratio", "cell I/O latency", "index-heavy plans"]}
+  "cell multiblock physical read": {meaning: "Exadata multi-block read not offloaded", checks: ["why the scan was not a smart scan (buffered read, small table)"]}
+  "cell smart table scan": {meaning: "Exadata smart scan in progress (offloaded)", checks: ["offload efficiency (io_cell_offload_eligible_bytes vs interconnect bytes)", "storage index benefit"]}
+  "cell smart index scan": {meaning: "Exadata smart scan on an index fast full scan", checks: ["offload efficiency"]}
+  "cell list of blocks physical read": {meaning: "Exadata batched single-block reads", checks: ["as db file parallel read"]}
+  "log file sync": {meaning: "Commit waits for LGWR to flush redo", checks: ["log file parallel write latency", "commit rate", "LGWR CPU starvation"]}
+  "log file parallel write": {meaning: "LGWR writing redo to disk", checks: ["redo storage latency"]}
+  "gc buffer busy acquire": {meaning: "RAC: block busy in another instance's cache", checks: ["hot blocks / right-growing indexes", "interconnect latency"]}
+  "gc cr request": {meaning: "RAC: waiting for a consistent-read block from another instance", checks: ["interconnect", "LMS load"]}
+  "library cache lock": {meaning: "Waiting to lock a library cache object (DDL / compile / invalidation)", checks: ["concurrent DDL", "invalid objects being recompiled"]}
+  "library cache: mutex X": {meaning: "Mutex contention on a library cache object (hot cursor / parsing)", checks: ["hard parse rate", "version count", "hot SQL"]}
+  "cursor: pin S wait on X": {meaning: "Waiting for a cursor being hard parsed / loaded by another session", checks: ["hard parse storms", "cursor invalidations"]}
+  "buffer busy waits": {meaning: "Block in the buffer cache is being changed / read by another session", checks: ["hot blocks (segment header, index leaf)", "freelists / ASSM"]}
+  "latch: shared pool": {meaning: "Shared pool latch contention (allocation / hard parsing)", checks: ["hard parse rate", "ORA-4031 history"]}
+  "latch: cache buffers chains": {meaning: "Hot block chains in the buffer cache", checks: ["hot blocks and the SQL touching them"]}
+  "free buffer waits": {meaning: "No free buffers: DBWR cannot keep up", checks: ["DBWR write latency", "buffer cache size"]}
+  "PL/SQL lock timer": {meaning: "Session sleeping in DBMS_LOCK/DBMS_SESSION.SLEEP (idle)", checks: []}
+  "SQL*Net message from client": {meaning: "Idle: waiting for the client to send the next request", checks: ["client think time; not a database problem"]}
+  "SQL*Net more data from client": {meaning: "Receiving a large request from the client", checks: ["network throughput", "large binds / arrays"]}
+  "read by other session": {meaning: "Another session is reading the same block from disk", checks: ["hot objects with physical reads"]}
+  "enq: HW - contention": {meaning: "High-water mark enqueue: concurrent extent allocation (LOB / inserts)", checks: ["LOB inserts", "extent sizes"]}
+  "enq: SQ - contention": {meaning: "Sequence cache contention", checks: ["sequence cache size (increase), RAC ordered sequences"]}
+  "resmgr:cpu quantum": {meaning: "Session throttled by Resource Manager (CPU)", checks: ["resource plan, consumer group, CPU count"]}

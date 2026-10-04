@@ -60,6 +60,9 @@ class FakeTransport:
             dest.write_text("fetched:" + path)
         return CommandResult(name="cat_file", argv=["cat", path], returncode=0, stdout=str(dest))
 
+    def fetch_tail(self, path, dest, **kw):
+        return self.fetch(path, dest, **kw)
+
 
 @pytest.fixture
 def fake_transport_factory(fixtures_dir: Path):

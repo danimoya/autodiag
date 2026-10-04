@@ -1,0 +1,68 @@
+# ORA-7445 (OS exception, usually SIGSEGV/SIGBUS) guidance; the failing function is the key.
+generic:
+  title: "ORA-7445 OS exception in an Oracle process"
+  meaning: >-
+    The process received a signal (SIGSEGV = invalid memory access, SIGBUS = bus error,
+    SIGFPE = arithmetic fault) inside the named kernel function. It is almost always a
+    software bug or memory corruption, occasionally faulty hardware or OS libraries.
+  checks:
+    - "Signal type and address: ADDR:0x0 (null pointer) points to a bug; random high addresses may indicate memory corruption"
+    - "First application frame and its component (the 'Signaling' frame in the incident context)"
+    - "Is the same function hit every time (stack frequency) or does it vary (memory corruption / hardware)?"
+    - "Current SQL and PL/SQL stack: can the statement be reproduced?"
+    - "OS logs for hardware errors (MCE, EDAC, cell alerts) at the same time"
+  actions:
+    - "Search My Oracle Support for 'ORA-7445 [<function>]' with the release"
+    - "If a specific SQL triggers it, try a different plan (hint / SQL patch) as a workaround"
+    - "Package the incident (ADRCI IPS) with core dump excluded if too large, and open an SR"
+entries:
+  - match_func: "^kgl"
+    title: "Crash in the library cache"
+    typical_causes: ["known bug", "concurrent DDL/invalidations", "shared pool corruption"]
+    checks: ["object being accessed (current SQL / library cache handle in trace)", "recent DDL"]
+    mos_search: "ORA-7445 kgl"
+  - match_func: "^kks"
+    title: "Crash in shared cursor code"
+    typical_causes: ["known bug", "high version count / cursor sharing issue"]
+    checks: ["V$SQL_SHARED_CURSOR for the sql_id", "cursor_sharing setting"]
+    mos_search: "ORA-7445 kks"
+  - match_func: "^(qer|qei|qks|qkn)"
+    title: "Crash in the SQL execution engine or optimizer"
+    typical_causes: ["plan-specific bug", "adaptive plans / statistics feedback", "specific SQL construct"]
+    checks: ["current SQL and plan (10053 if needed)", "does disabling the feature (e.g. _optimizer_adaptive_plans) avoid it"]
+    mos_search: "ORA-7445 qer"
+  - match_func: "^kd(x|i)"
+    title: "Crash in the index layer"
+    typical_causes: ["index block corruption", "bug"]
+    checks: ["ANALYZE INDEX ... VALIDATE STRUCTURE", "ORA-1578 / ORA-8103 history on the object"]
+    mos_search: "ORA-7445 kdx"
+  - match_func: "^kcb"
+    title: "Crash in the buffer cache"
+    typical_causes: ["block corruption", "memory corruption", "I/O layer errors"]
+    checks: ["RMAN VALIDATE of the involved file", "cell / storage errors"]
+    mos_search: "ORA-7445 kcb"
+  - match_func: "^(pev|pfr|pen|psd|plsql|pl)"
+    title: "Crash in the PL/SQL engine"
+    typical_causes: ["bug in PL/SQL VM", "corrupt PL/SQL object", "deep recursion"]
+    checks: ["PL/SQL stack in the trace", "recompile the top object", "stack (Used / Configured) line in the trace for overflow"]
+    mos_search: "ORA-7445 pevm"
+  - match_func: "^(kj|kcl)"
+    title: "Crash in RAC lock / cache fusion code"
+    typical_causes: ["interconnect issues", "bug"]
+    checks: ["other instances' incidents at the same time", "LMS/LMD traces"]
+    mos_search: "ORA-7445 kjb"
+  - match_func: "^(ksm|kgh)"
+    title: "Crash in memory management"
+    typical_causes: ["memory corruption", "hardware memory fault"]
+    checks: ["OS memory errors", "recent SGA resize"]
+    mos_search: "ORA-7445 kgh"
+  - match_func: "^(ns|nt|ttc|kpo|opi)"
+    title: "Crash in the network / OPI layer"
+    typical_causes: ["client driver mismatch", "bug", "malformed packet"]
+    checks: ["client driver version (CLIENT DRIVER marker)", "sqlnet.ora settings", "does one client type trigger it"]
+    mos_search: "ORA-7445 opi"
+  - match_func: "^(kxf|kxfp)"
+    title: "Crash in parallel execution"
+    typical_causes: ["PX message buffer corruption", "bug"]
+    checks: ["parallel degree of the SQL", "does serial execution avoid it"]
+    mos_search: "ORA-7445 kxf"

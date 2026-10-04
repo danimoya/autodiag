@@ -161,6 +161,25 @@ class SshTransport:
             duration=time.monotonic() - started,
         )
 
+    def fetch_tail(self, path: str, dest: Path, *, max_bytes: int) -> CommandResult:
+        """Read one extra byte to detect omitted history, then retain complete tail lines."""
+        if max_bytes < 1:
+            raise ValueError("max_bytes must be positive")
+        result = self.run(
+            "tail_file", {"path": path, "length": max_bytes + 1}, max_bytes=max_bytes + 1
+        )
+        if not result.ok:
+            return result
+        raw = result.stdout.encode("utf-8")
+        truncated = result.truncated or len(raw) > max_bytes
+        if truncated:
+            # The first line may start mid-character or mid-record. The ADR reader also
+            # discards lines before the next timestamp so they cannot inherit a wrong date.
+            raw = raw[-max_bytes:].partition(b"\n")[2]
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(raw)
+        return result.model_copy(update={"stdout": str(dest), "truncated": truncated})
+
 
 def _decode(data: bytes) -> str:
     return data.decode("utf-8", errors="replace")

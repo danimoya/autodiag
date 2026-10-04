@@ -9,5 +9,5 @@ dist/
 .env
 testbed/.env
 *.local.*
-data/
+/data/
 testbed/faults/out/

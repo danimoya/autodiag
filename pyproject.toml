@@ -21,6 +21,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "build>=1.2",
+    "setuptools>=68",
+    "wheel",
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "ruff>=0.5",
@@ -59,4 +62,4 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-autodiag = ["sql/catalog/*.sql", "report/templates/*", "web/templates/**/*", "web/static/**/*", "case/schema/*.sql"]
+autodiag = ["kb/data/*.yaml", "llm/prompts/*.md", "sql/catalog/*.sql", "report/templates/*", "web/templates/**/*", "web/static/**/*", "case/schema/*.sql"]

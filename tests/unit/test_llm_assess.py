@@ -134,6 +134,31 @@ def test_dossier_text_budget_and_redaction() -> None:
     assert "10.1.2.3" not in text  # node IP redacted at the model boundary
 
 
+def test_all_dossier_fields_are_redacted_including_omissions_and_noise() -> None:
+    from autodiag.diagnose.models import NoiseGroup
+
+    d = _dossier()
+    d.items[0].node = "192.0.2.80"
+    d.items[1].title = "Problem on secret.example.internal at 192.0.2.81"
+    d.items[1].text = "x" * 4000
+    d.noise = [NoiseGroup(signature="client 192.0.2.82", node="secret.example.internal", count=2)]
+    d.errors = ["SSH failed on 192.0.2.83"]
+    for limit in (1, 200, 700, 6000):
+        text, seen = dossier_text(d, redact=True, max_bytes=limit)
+        assert len(text.encode()) <= limit
+        assert "secret.example.internal" not in text
+        assert not any(f"192.0.2.{n}" in text for n in range(80, 84))
+        assert all(body in text for body in seen.values())
+
+
+def test_dossier_budget_counts_utf8_bytes() -> None:
+    d = _dossier()
+    d.items[0].text = "診断" * 1000
+    text, seen = dossier_text(d, max_bytes=650)
+    assert len(text.encode()) <= 650
+    assert all(body in text for body in seen.values())
+
+
 def test_rules_assessment_ranks_by_severity() -> None:
     a = rules_assessment(_dossier(), note="no model")
     assert a.model == "rules" and a.severity is Severity.CRITICAL

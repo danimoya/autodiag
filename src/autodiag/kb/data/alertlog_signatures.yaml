@@ -1,0 +1,128 @@
+# Alert-log line patterns (regex on the first line of an entry) -> meaning and next checks.
+entries:
+  - pattern: "ORA-00060"
+    title: "Deadlock detected"
+    meaning: "Two or more sessions waited for each other's row/table locks; Oracle rolled back one statement."
+    checks: ["deadlock trace: resource types (TX vs TM), SQL of both sessions, rows waited on", "TM locks usually mean an unindexed foreign key"]
+    actions: ["fix the application lock order / index the FK; the database itself is healthy"]
+    severity: low
+  - pattern: "Corrupt block relative dba|Hex dump of \\(file|ORA-01578"
+    title: "Block corruption read"
+    meaning: "A block failed its checksum or header check when read."
+    checks: ["RMAN VALIDATE / DBV on the file", "V$DATABASE_BLOCK_CORRUPTION", "storage / cell errors at the time"]
+    actions: ["block media recovery with RMAN", "identify the object with DBA_EXTENTS and assess"]
+    severity: high
+  - pattern: "ORA-01555"
+    title: "Snapshot too old"
+    meaning: "A long query could not find undo old enough to reconstruct a consistent read."
+    checks: ["Query Duration in the message vs undo_retention and V$UNDOSTAT (tuned retention, max query length)", "undo tablespace size and autoextend", "concurrent heavy DML"]
+    actions: ["increase undo size / retention, or shorten the query / batch"]
+    severity: medium
+  - pattern: "checkpoint not complete|cannot allocate new log"
+    title: "Redo log wait (checkpoint not complete)"
+    meaning: "LGWR must wait for DBWR to finish a checkpoint before reusing a log: redo logs are too small or too few for the write rate."
+    checks: ["log switch frequency", "redo log size and group count", "DBWR I/O latency"]
+    actions: ["add / enlarge redo log groups"]
+    severity: medium
+  - pattern: "ORA-04031"
+    title: "Shared pool / SGA memory exhausted"
+    meaning: "A request for shared memory could not be satisfied (subpool, component and size are in the message)."
+    checks: ["V$SGASTAT for the named pool", "hard parse rate and literal SQL", "recent SGA resize operations", "large allocations by one component"]
+    actions: ["increase the pool / enable ASMM headroom", "reduce hard parsing (cursor_sharing, binds)"]
+    severity: high
+  - pattern: "ORA-04030|ORA-04036"
+    title: "Process / instance PGA memory exhausted"
+    meaning: "A process could not allocate private memory (ORA-4030) or the instance exceeded pga_aggregate_limit (ORA-4036)."
+    checks: ["which process and heap in the trace", "V$PROCESS PGA_ALLOC_MEM top consumers", "PL/SQL collections, sorts, hash joins in the statement"]
+    actions: ["fix the memory-hungry session / SQL", "adjust pga_aggregate_limit / target"]
+    severity: high
+  - pattern: "ORA-00020|maximum number of processes"
+    title: "Process limit reached"
+    meaning: "Connections exceeded the processes parameter."
+    checks: ["connection storms (listener log)", "application pool sizing"]
+    actions: ["raise processes/sessions after confirming the source of connections"]
+    severity: high
+  - pattern: "ORA-00600"
+    title: "Internal error (see problem key)"
+    meaning: "Kernel consistency check failed; incident created."
+    checks: ["use the incident tools: get_incident, kb_lookup with the problem key"]
+    actions: ["see ORA-600 guidance"]
+    severity: high
+  - pattern: "ORA-07445"
+    title: "OS exception in an Oracle process (see problem key)"
+    meaning: "Process crashed with a signal; incident created."
+    checks: ["use the incident tools: get_incident, kb_lookup with the problem key"]
+    actions: ["see ORA-7445 guidance"]
+    severity: high
+  - pattern: "ORA-00700"
+    title: "Soft internal error (ORA-700)"
+    meaning: "A soft assertion in the kernel fired; an incident is recorded but the operation usually continues. Often OS/configuration related (e.g. priority, memory locking)."
+    checks: ["arguments name the check and the suggested action"]
+    actions: ["follow the argument hints; usually configuration"]
+    severity: low
+  - pattern: "ORA-00800"
+    title: "Soft external error (ORA-800)"
+    meaning: "An OS-level operation (e.g. setting process priority for VKTM/LGWR) failed; informational unless recurring."
+    checks: ["OS limits / capabilities of the oracle user (setpriority, memlock)"]
+    actions: ["fix OS configuration if latency matters"]
+    severity: low
+  - pattern: "TNS-12535|TNS-00505|inbound connection timed out"
+    title: "Inbound connection timeout"
+    meaning: "A client connected to the listener but did not complete authentication within sqlnet.inbound_connect_timeout."
+    checks: ["listener log for the client address", "network scanners / half-open connections", "client-side firewall / DNS delays"]
+    actions: ["usually harmless; block the source or tune the timeout"]
+    severity: low
+  - pattern: "opiodr aborting process"
+    title: "Client connection aborted"
+    meaning: "A server process was aborted because the client went away (ORA-28 / ORA-3113)."
+    checks: ["frequency and client type", "network stability"]
+    actions: ["client / network side"]
+    severity: low
+  - pattern: "PMON .*terminating|Instance terminated by"
+    title: "Instance crash"
+    meaning: "A background process died and PMON terminated the instance."
+    checks: ["the ORA error in the message and the background trace named", "incidents seconds before", "OS memory / OOM killer, storage outage"]
+    actions: ["root-cause the background failure before restarting repeatedly"]
+    severity: critical
+  - pattern: "Reconfiguration started|Reconfiguration complete"
+    title: "RAC reconfiguration"
+    meaning: "An instance joined or left the cluster; global resources were remastered."
+    checks: ["which instance left and why (its alert log)", "interconnect / eviction messages (CSSD)"]
+    actions: ["investigate the leaving instance"]
+    severity: medium
+  - pattern: "flood controlled"
+    title: "Incident flood control"
+    meaning: "More incidents of the same problem key occurred than DDE records; the problem is recurring."
+    checks: ["incident count over time for the key"]
+    actions: ["treat as recurring; fix the root cause"]
+    severity: medium
+  - pattern: "ORA-01652|ORA-01653|ORA-01654|ORA-01688"
+    title: "Tablespace space exhausted"
+    meaning: "An extent could not be allocated in the named tablespace (temp, data or undo)."
+    checks: ["free space and autoextend of the tablespace", "the statement that needed the space"]
+    actions: ["add space / resize, or fix the runaway statement"]
+    severity: medium
+  - pattern: "ORA-00494"
+    title: "Enqueue held too long (controlfile / log)"
+    meaning: "A process held a critical enqueue (CF or similar) for too long; often I/O stalls."
+    checks: ["I/O latency on control files / redo at the time", "storage / cell alerts"]
+    actions: ["fix the I/O stall; may crash the instance if repeated"]
+    severity: high
+  - pattern: "ORA-27300|ORA-27301|ORA-27302"
+    title: "OS system call failure"
+    meaning: "An OS call failed; the message chain gives the syscall and errno."
+    checks: ["OS limits (ulimit, kernel parameters), file descriptors, memory"]
+    actions: ["fix the OS-level cause"]
+    severity: medium
+  - pattern: "Private strand flush not complete"
+    title: "Redo strand flush wait"
+    meaning: "Log switch waited for private redo strands to flush; benign unless frequent."
+    checks: ["log switch frequency"]
+    actions: ["enlarge redo logs if frequent"]
+    severity: low
+  - pattern: "Thread .* advanced to log sequence"
+    title: "Log switch"
+    meaning: "Informational."
+    checks: ["frequency: more than a few per 15 minutes suggests undersized redo logs"]
+    actions: []
+    severity: info

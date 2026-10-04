@@ -5,6 +5,9 @@ API exposes every tool as `POST /api/v1/tools/<tool>` with the same parameters a
 body (see `docs/gui.md`). Run it with `autodiag mcp stdio` (local agent), `autodiag mcp
 http` (HTTP at `/mcp`) or as part of `autodiag serve`.
 
+Both HTTP entrypoints require the configured bearer token on MCP requests when
+`AUTODIAG_MCP_TOKEN` is set.
+
 ## Result envelope
 
 Every tool returns a JSON object. On success it carries:
@@ -31,7 +34,7 @@ evidence land in the target's scratch case (`scratch: <target>`).
 
 | Tool | Parameters | Returns |
 |---|---|---|
-| `diagnose_problem` | `target`, `problem_key` or `incident_id`, `case_id`, `assess=false`, `record=false`, `max_incidents=5`, `max_bytes=24000` | Dossier items (each with an `id` to cite, `kind`, `severity_hint`, `ts`, `node`, `title`, `text`), `noise` counts, `counts`, `stats`, `errors`, the `assessment`, `finding_ids`, a rendered `text` |
+| `diagnose_problem` | `target`, `problem_key` or `incident_id`, optional `node`/`adr_home`, `case_id`, `assess=false`, `record=false`, `max_incidents=5`, `max_bytes=24000` | Dossier items (each with an `id` to cite, `kind`, `severity_hint`, `ts`, `node`, `title`, `text`), `noise` counts, `counts`, `stats`, `errors`, the `assessment`, `finding_ids`, a rendered `text` |
 | `diagnose_alert` | `target`, `hours=24` or `since`/`until` (ISO 8601), `case_id`, `assess`, `record`, `max_bytes` | same shape |
 | `diagnose_instance` | `target`, `days=7`, `hours=24`, `live` (null = auto when SQL*Net is configured), `case_id`, `assess`, `record`, `max_bytes` | same shape |
 
@@ -52,14 +55,20 @@ supersedes it.
 |---|---|---|
 | `list_targets` | – | name, kind, platform, version, nodes, whether SQL*Net is configured |
 | `list_problems` | `target`, `since_hours=168`, `offset=0`, `limit=50` | ADR problems (`adrci show problem`) across the target's nodes |
-| `list_incidents` | `target`, `problem_id` or `problem_key`, `limit=50` | incidents of one problem; a key is resolved to ids first |
-| `get_incident` | `target`, `incident_id`, `case_id` | adrci detail plus the parsed incident trace, fetched into the case as an artifact |
+| `list_incidents` | `target`, `problem_id` or `problem_key`, `limit=50`, optional `node`/`adr_home` | incidents with their node/home identity; a key is resolved to ids first |
+| `get_incident` | `target`, `incident_id`, `case_id`, optional `node`/`adr_home` | adrci detail plus parsed trace; ambiguous unqualified IDs are rejected |
 | `capture_environment` | `target`, `case_id` | version, opatch and SQL patch registry, non-default parameters, instances, node facts |
-| `create_ips_package` | `target`, `problem_id` or `incident_id`, `case_id` | starts a job: `adrci ips create` + `ips generate`; the zip is fetched into the case |
+| `create_ips_package` | `target`, `problem_id` or `incident_id`, `case_id`, optional `node`/`adr_home` | requires a single selected ADR home; starts IPS creation/generation and fetches the zip into the case |
 | `collect_ahf` | `target`, `from_ts`, `to_ts`, `case_id` | starts a job: `tfactl diagcollect` on the first node; output stays on the node |
 | `job_status` | `job_id` | status and result of a job |
 
 ## Alert log
+
+Window/statistics/rate tools read the newest 64 MiB and return `coverage` with
+`truncated`, `oldest_available`, `newest_available`, `limit_bytes`, `line_numbers` and
+`warning`. When older history is omitted, the envelope's `truncated` is also true;
+output paging cannot recover that history. Diagnose tools include coverage evidence
+and collector warnings. Timeline construction rejects truncated alert history.
 
 | Tool | Parameters | Returns |
 |---|---|---|
