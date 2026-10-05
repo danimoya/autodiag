@@ -1,2 +1,4 @@
 docs/demo/*.gif binary
 docs/demo/*.cast -diff
+docs/screenshots/*.png binary
+docs/screenshots/*.webp binary

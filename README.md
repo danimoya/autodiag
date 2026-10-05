@@ -1,8 +1,20 @@
 # AutoDiag
 
 <p align="center">
+  <img src="docs/screenshots/tour.webp" alt="AutoDiag GUI tour: Oracle 23ai and 26ai targets, ADR incidents, cases, traces, comparisons and reports" width="800">
+</p>
+
+[GUI screenshots (static gallery)](docs/screenshots/README.md) ·
+[Bootstrap the GUI: local setup, systemd, NPM, pitfalls and recommendations](docs/gui-bootstrap.md)
+
+<details>
+<summary>CLI diagnosis demo</summary>
+
+<p align="center">
   <img src="docs/demo/autodiag.gif" alt="AutoDiag: automated diagnosis of an ADR problem" width="800">
 </p>
+
+</details>
 
 Oracle Database diagnostic assistant for 19c / 23ai on Exadata Cloud@Customer and any
 other Oracle estate. It reads what a DBA would read by hand, ADR problems and incidents,
@@ -116,6 +128,8 @@ AutoDiag reads; it never changes a database. The full description is in `docs/sa
 | `docs/cli.md` | CLI reference with walkthroughs |
 | `docs/mcp.md` | Every MCP tool with parameters, result envelope, caps; the SQL catalog |
 | `docs/gui.md` | Web UI pages and the REST API |
+| [GUI bootstrap](docs/gui-bootstrap.md) | Local setup, dual-version targets, systemd, authenticated NPM publishing, checks and pitfalls |
+| [GUI screenshot gallery](docs/screenshots/README.md) | Every GUI page type, captured against real 23ai/26ai testbeds; reproducible README carousel |
 | `docs/safety.md` | Guardrails: allowlist, read-only SQL, redaction, proof verification, data flows |
 | `docs/architecture.md` | Modules, data flow, the diagnosis engine |
 | `docs/opencode.md` | Using AutoDiag from OpenCode (skill, agent, commands, MCP config) |

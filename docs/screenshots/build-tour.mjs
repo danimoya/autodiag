@@ -1,0 +1,23 @@
+// repo-carousel recipe: equal-sized PNGs joined as an animated WebP.
+import {execFileSync} from 'node:child_process';
+import {readdirSync, readFileSync, existsSync, statSync} from 'node:fs';
+import {join, dirname} from 'node:path';
+import {fileURLToPath, pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
+const here = dirname(fileURLToPath(import.meta.url));
+const root = execFileSync('npm', ['root', '-g'], {encoding:'utf8'}).trim();
+const packagePath = [join(root,'sharp'), join(root,'sharp-cli/node_modules/sharp')].find(p=>existsSync(join(p,'package.json')));
+const modulePath = packagePath && createRequire(import.meta.url).resolve(packagePath);
+if (!modulePath) throw new Error('Install sharp-cli: npm install -g sharp-cli');
+const sharp = (await import(pathToFileURL(modulePath).href)).default;
+const frames = readdirSync(here).filter(n => /^\d\d-.*\.png$/.test(n)).sort();
+if (!frames.length) throw new Error('No numbered PNG frames');
+const inputs = frames.map(n => readFileSync(join(here,n)));
+const dimensions = await Promise.all(inputs.map(b => sharp(b).metadata()));
+if (!dimensions.every(m => m.width === dimensions[0].width && m.height === dimensions[0].height)) throw new Error('Mismatched frame dimensions');
+const output = join(here,'tour.webp');
+await sharp(inputs, {join:{animated:true}}).webp({quality:78,effort:6,loop:0,delay:frames.map(()=>3500)}).toFile(output);
+const m = await sharp(output,{animated:true}).metadata();
+if (m.pages !== frames.length || m.loop !== 0 || m.pageHeight !== dimensions[0].height || !m.delay.every(d=>d===3500)) throw new Error('Animation metadata mismatch');
+if (statSync(output).size > 5*1024*1024) throw new Error('Tour exceeds 5 MiB budget');
+console.log({frames:m.pages,width:m.width,height:m.pageHeight,loop:m.loop,bytes:statSync(output).size});

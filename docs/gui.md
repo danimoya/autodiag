@@ -1,5 +1,9 @@
 # Web UI and REST API
 
+Start with the [GUI bootstrap guide](gui-bootstrap.md) for local setup, dual-version
+targets, systemd and authenticated NPM publishing. The [screenshot gallery](screenshots/README.md)
+shows the pages against disposable 23ai and 26ai testbeds.
+
 `autodiag serve` (or the systemd user unit) runs one process on `listen_host:listen_port`
 (default `127.0.0.1:8790`) that serves the HTML pages, the REST API under `/api/v1`, the
 OpenAPI description at `/api/openapi.json` with Swagger at `/api/docs`, and the MCP
@@ -18,7 +22,8 @@ and multi-user access is meant to go through a reverse proxy that authenticates.
 |---|---|---|
 | `/` | redirects to `/cases` | |
 | `/targets` | the inventory: name, kind, platform, version, nodes, SQL*Net | |
-| `/targets/{name}` and `/targets/{name}/problems?days=7` | ADR problems of the last days across the nodes | **diagnose instance** (live checks auto / yes / no), **diagnose alert log** (hours), per problem **diagnose** and **triage** |
+| `/targets/{name}` | target configuration, nodes, baselines and cases | navigate to ADR problems, alert logs and cases |
+| `/targets/{name}/problems?days=7` | ADR problems of the last days across the nodes | **diagnose instance** (live checks auto / yes / no), **diagnose alert log** (hours), per problem **diagnose** and **triage** |
 | `/targets/{name}/problems/{problem_id}` | incidents of one problem: id, key, time, error, arguments, flood control | |
 | `/targets/{name}/alertlog?hours=24&grep=&context=3&top=20` | alert-log statistics for the window (ORA histogram, top signatures, per-hour, lifecycle) and grep hits with context | change the window and the pattern |
 | `/cases?target=` | cases, open or closed | open a case (target, title, problem keys) |
