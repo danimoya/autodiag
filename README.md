@@ -1,20 +1,15 @@
 # AutoDiag
 
 <p align="center">
+  <img src="docs/demo/autodiag.gif" alt="AutoDiag: automated diagnosis of an ADR problem" width="800">
+</p>
+
+<p align="center">
   <img src="docs/screenshots/tour.webp" alt="AutoDiag GUI tour: Oracle 23ai and 26ai targets, ADR incidents, cases, traces, comparisons and reports" width="800">
 </p>
 
 [GUI screenshots (static gallery)](docs/screenshots/README.md) ·
 [Bootstrap the GUI: local setup, systemd, NPM, pitfalls and recommendations](docs/gui-bootstrap.md)
-
-<details>
-<summary>CLI diagnosis demo</summary>
-
-<p align="center">
-  <img src="docs/demo/autodiag.gif" alt="AutoDiag: automated diagnosis of an ADR problem" width="800">
-</p>
-
-</details>
 
 Oracle Database diagnostic assistant for 19c / 23ai on Exadata Cloud@Customer and any
 other Oracle estate. It reads what a DBA would read by hand, ADR problems and incidents,

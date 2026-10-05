@@ -61,7 +61,11 @@ already overwritten by ID collisions.
   validated separately on 2026-10-05; it has not replaced those fixtures. The parsers
   accept 19c layouts by design, but no real 19c incident, 10046 or deadlock trace is in
   the fixture set yet. Add anonymised 19c traces under
-  `tests/fixtures/19c/` and extend the parametrised parser tests.
+   `tests/fixtures/19c/` and extend the parametrised parser tests. An official 19c
+   Enterprise container candidate was identified on 2026-10-05, but the registry
+   manifest check failed authentication; see [19c access prerequisites and validation
+   plan](testbed.md#oracle-19c-candidate-not-yet-validated). No 19c runtime validation
+   or three-version compatibility is claimed yet.
 - **ORA-600 / ORA-700 generation** needs ORADEBUG, which the Free edition ships disabled;
   the testbed enables it on first start (see `docs/testbed.md`). Real incidents from the
   kit exist for ORA-600, ORA-700 and ORA-7445.

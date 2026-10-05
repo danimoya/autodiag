@@ -84,6 +84,50 @@ the live tests against the same evidence, set `AUTODIAG_REUSE_FAULT_LOG=true` to
 with the original `AUTODIAG_VALIDATION_DIR`.
 Real RAC, Exadata, AHF and 19c still need separate environments.
 
+## Oracle 19c candidate (not yet validated)
+
+Checked 2026-10-05: Oracle documents this official Enterprise Edition image:
+
+```text
+container-registry.oracle.com/database/enterprise:19.3.0.0
+```
+
+[Oracle's download instructions](https://docs.oracle.com/cd/G30554_01/books/DeployCont/c-Setting-Up-Oracle-Database.html)
+require accepting the applicable license agreement and authenticating to the registry.
+The manifest check on the validation host returned `unauthorized: Auth failed`;
+no image was downloaded or started, and no digest has been verified. This is not
+the freely accessible Oracle Database Free image used for the other two targets.
+An authorized operator must complete the required access steps locally; do not
+send credentials through chat or commit them.
+
+```bash
+docker login container-registry.oracle.com
+docker manifest inspect container-registry.oracle.com/database/enterprise:19.3.0.0
+```
+
+An alternative is Oracle's [official local build recipe](https://github.com/oracle/docker-images/tree/main/OracleDatabase/SingleInstance),
+using separately obtained 19c installation binaries. Neither route establishes
+permission to use Enterprise Edition or optional management packs by itself.
+
+After authorized access, the validation work is:
+
+1. Resolve and pin the AMD64 image digest. Record the actual database release/RU;
+   a run on 19.3 alone must not be described as testing all 19c release updates.
+2. Use a separate project, container, data volumes and free loopback ports (proposed
+   SQL 1523 / SSH 2224; check availability before binding). Never reuse 23ai/26ai data.
+3. Adapt the SSH layer to the image's package manager and actual Oracle home
+   (Oracle's 19c build recipe uses `/opt/oracle/product/19c/dbhome_1`). Configure
+   SID/PDB/ADR paths explicitly: the setup SQL currently hardcodes `FREEPDB1`.
+   Do not blindly apply the Free-edition ORADEBUG-enabling restart hook to 19c.
+4. Verify the read-only grants and version banner, then run fault injection only
+   in the disposable database. Exercise incident/deadlock/hang/10046 parsing,
+   alert logs, SQL catalog, IPS, CLI/API/MCP, GUI reports and live LLM proofs.
+5. Preserve results and representative sanitized 19c fixtures; update the roadmap
+   and compatibility statement only for the scenarios that actually passed.
+
+Current evidence supports tested single-instance 23ai and 26ai scenarios, **not yet
+three-version compatibility**. Real RAC, Exadata and AHF remain separate claims.
+
 ## Reset the default testbed
 
 ```bash
