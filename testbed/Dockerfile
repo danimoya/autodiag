@@ -9,9 +9,9 @@ RUN echo "ip_resolve=4" >> /etc/dnf/dnf.conf \
     && { [ -f /etc/dnf/vars/ociregion ] && : > /etc/dnf/vars/ociregion || true; } \
     && sed -i -E 's#yum-[a-z]+-[a-z]+-[0-9]+\.oracle\.com#yum.oracle.com#g' /etc/yum.repos.d/*.repo \
     && if command -v dnf >/dev/null 2>&1; then \
-        dnf -y install openssh-server openssh-clients procps-ng && dnf clean all; \
+        dnf -y install openssh-server openssh-clients procps-ng zip && dnf clean all; \
     else \
-        microdnf -y install openssh-server openssh-clients procps-ng && microdnf clean all; \
+        microdnf -y install openssh-server openssh-clients procps-ng zip && microdnf clean all; \
     fi \
     && mkdir -p /home/oracle/sshd /home/oracle/.ssh /autodiag \
     && chown -R oracle:oinstall /home/oracle /autodiag \

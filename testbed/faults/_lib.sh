@@ -34,7 +34,7 @@ tb_incident_ids() {
       | awk '/^ +INCIDENT_ID +[0-9]+/ {print $2; next} /^[0-9]+[[:space:]]/ && !/rows fetched/ {print $1}' \
       | sort -n
 }
-tb_new_ids()      { comm -13 <(echo "$1" | sort -n) <(echo "$2" | sort -n) | tr '\n' ' ' | sed 's/ *$//'; }
+tb_new_ids()      { LC_ALL=C comm -13 <(echo "$1" | LC_ALL=C sort) <(echo "$2" | LC_ALL=C sort) | sort -n | tr '\n' ' ' | sed 's/ *$//'; }
 tb_problem_key()  {
     tb_adrci "show incident -mode detail -p \"incident_id=$1\"" \
       | awk '/^ +PROBLEM_KEY +/ {sub(/^ +PROBLEM_KEY +/, ""); print; exit}'

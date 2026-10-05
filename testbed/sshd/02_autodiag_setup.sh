@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 # Startup hook: the pre-built Free image never runs the one-time setup directory, so
 # create the diagnostic user and test schema on first start (idempotent check).
-set -u
-n=$("$ORACLE_HOME/bin/sqlplus" -s / as sysdba <<'SQL' | tr -d ' \n'
+set -euo pipefail
+n=$("$ORACLE_HOME/bin/sqlplus" -s / as sysdba <<'SQL' | tr -d '[:space:]'
+whenever sqlerror exit failure
+whenever oserror exit failure
 set heading off feedback off pagesize 0
 select count(*) from dba_users where username = 'C##AUTODIAG';
 exit
 SQL
 )
+if [[ "$n" != "0" && "$n" != "1" ]]; then
+    echo "autodiag: could not determine diagnostic schema state" >&2
+    exit 1
+fi
 if [ "$n" = "0" ]; then
     echo "autodiag: running one-time setup"
     /opt/oracle/scripts/setup/01_users.sh

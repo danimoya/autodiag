@@ -1,0 +1,21 @@
+# Use only for isolated validation; intentionally uses the integration suite's name.
+targets:
+  - name: testbed
+    kind: single
+    platform: generic
+    oracle_version: "23.9"
+    db_unique_name: FREE
+    diagnostics_pack: true
+    nodes:
+      - host: 127.0.0.1
+        ssh_alias: autodiag-testbed-23ai
+        ssh_port: 2223
+        instance: FREE
+        oracle_home: /opt/oracle/product/23ai/dbhomeFree
+    adr_base: /opt/oracle
+    adr_homes: [diag/rdbms/free/FREE]
+    sqlnet:
+      dsn: localhost:1522/FREE
+      user: C##AUTODIAG
+      password_env: AUTODIAG_USER_PWD
+    ips_dest: /tmp

@@ -1,0 +1,36 @@
+# Separate, reproducible AMD64 Oracle 23ai validation environment.
+# Never attach the existing 26ai data volume to this database.
+name: autodiag23ai
+services:
+  oradb:
+    platform: linux/amd64
+    build:
+      context: .
+      args:
+        # Oracle Database Free 23.9.0.0, linux/amd64 manifest (not latest).
+        BASE_IMAGE: container-registry.oracle.com/database/free@sha256:109421eb0e97db4ba5f01086d02c20ace673b809cd8c9a1a6e193bb04424abfb
+    image: autodiag-oradb:23ai-23.9-pinned
+    container_name: autodiag-oradb-23ai
+    hostname: oradb-23ai-test
+    shm_size: "4g"
+    mem_limit: 8g
+    env_file: .env
+    environment:
+      ENABLE_ARCHIVELOG: "true"
+    ports:
+      - "127.0.0.1:1522:1521"
+      - "127.0.0.1:2223:2222"
+    volumes:
+      - oradata:/opt/oracle/oradata
+      - sshdstate:/home/oracle/sshd
+      - ${AUTODIAG_SSH_PUBKEY:-~/.ssh/id_ed25519.pub}:/autodiag/authorized_keys:ro
+    healthcheck:
+      test: ["CMD", "/opt/oracle/checkDBStatus.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 30
+      start_period: 600s
+    restart: unless-stopped
+volumes:
+  oradata:
+  sshdstate:

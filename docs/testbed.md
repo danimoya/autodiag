@@ -1,8 +1,10 @@
 # Testbed: Oracle Database Free with ssh access
 
-The testbed simulates a database node as AutoDiag sees one: an Oracle Database (23ai
-Free) reachable over key-based SSH as the `oracle` user (port 2222) and over SQL*Net
+The default testbed simulates a database node as AutoDiag sees one: Oracle Database
+Free reachable over key-based SSH as the `oracle` user (port 2222) and over SQL*Net
 (port 1521), both bound to loopback on the host. Nothing else is needed on the host.
+The historical local image tag says `23ai`, but its actual release depends on the base
+image; the existing default testbed reports 26ai. Use the pinned environment below for 23ai.
 
 ## Start
 
@@ -53,7 +55,36 @@ spfile and restarts the instance once (`AUTODIAG_ENABLE_ORADEBUG=false` in `.env
 it disabled). This is only appropriate on a throwaway test instance; never change it on
 a production database.
 
-## Reset
+## Pinned Oracle 23ai validation (separate from the default testbed)
+
+The default testbed can run a newer Oracle release despite its historical `23ai`
+image tag. Use the separate AMD64 Compose file for reproducible 23ai testing:
+
+```bash
+docker compose -f testbed/compose.23ai.yaml build
+docker compose -f testbed/compose.23ai.yaml up -d
+# Wait for health and completion of the one-time diagnostic schema setup.
+AUTODIAG_EVAL_OPENCODE_MODEL=deepseek/deepseek-flash bash scripts/validate_23ai.sh
+```
+
+`compose.23ai.yaml` pins Oracle Free 23.9.0.0 to the AMD64 manifest digest
+`sha256:109421eb0e97db4ba5f01086d02c20ace673b809cd8c9a1a6e193bb04424abfb`.
+It uses container `autodiag-oradb-23ai`, project `autodiag23ai`, dedicated volumes,
+and loopback ports **1522** (SQL) and **2223** (SSH). Never reuse a 26ai data volume.
+The build includes `zip`, required for ADRCI IPS generation.
+
+The validation script reads the existing private `testbed/.env`, uses
+`targets.23ai.yaml` and `ssh_config.23ai` without changing the operational inventory,
+checks the actual `V$VERSION` banner before injecting faults, and creates temporary
+case storage, fault proofs and JUnit results. Set `AUTODIAG_VALIDATION_DIR` to keep
+results in a chosen directory. Choose an available OpenCode model for your installation.
+The live agent evaluation derives its expected frame from the fresh fault proof and
+requires a completed MCP result with that incident and a 23.9 version. To rerun only
+the live tests against the same evidence, set `AUTODIAG_REUSE_FAULT_LOG=true` together
+with the original `AUTODIAG_VALIDATION_DIR`.
+Real RAC, Exadata, AHF and 19c still need separate environments.
+
+## Reset the default testbed
 
 ```bash
 docker compose down -v            # drops the database and ADR

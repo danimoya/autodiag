@@ -1,6 +1,7 @@
 """Golden scenarios: deterministic checks through the MCP tools (always run) and an
 optional headless OpenCode run (``-m llm``) that must mention the expected keywords."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,52 @@ SCENARIOS = Path(__file__).parent / "scenarios"
 
 def load(name: str) -> dict:
     return yaml.safe_load((SCENARIOS / f"{name}.yaml").read_text())
+
+
+def live_expectation(expect: dict, fault_log: Path | None) -> dict:
+    """Keep fixture expectations unless a fresh fault run supplies the live frame."""
+    if fault_log is None:
+        return expect
+    matches = re.findall(
+        r'^AUTODIAG_FAULT name=ora7445 problem_key="(ORA 7445 \[([^\]]+)\])" '
+        r"incident_ids=\[([0-9 ]+)\].* status=ok$",
+        fault_log.read_text(),
+        re.MULTILINE,
+    )
+    assert matches, "fault log has no successful ORA-7445 proof"
+    key, frame, ids = matches[-1]
+    return {
+        **expect,
+        "problem_key": key,
+        "live_incident_ids": [int(i) for i in ids.split()],
+        "answer_keywords": [
+            frame if k == expect["first_app_frame"] else k for k in expect["answer_keywords"]
+        ],
+    }
+
+
+def test_live_expectation_uses_fresh_frame_without_changing_other_checks(tmp_path):
+    expect = load("ora7445_busy_loop")["expect"]
+    log = tmp_path / "faults.log"
+    log.write_text(
+        'AUTODIAG_FAULT name=ora7445 problem_key="ORA 7445 [kcbrls]" '
+        "incident_ids=[12] traces=[/diag/incident.trc] status=ok\n"
+    )
+    live = live_expectation(expect, log)
+    assert live["problem_key"] == "ORA 7445 [kcbrls]"
+    assert live["answer_keywords"] == ["kcbrls", "SIGSEGV", "PKG_ORDERS.BUSY_LOOP"]
+    assert expect["first_app_frame"] == "qeilbk1"
+    assert live_expectation(expect, None) is expect
+
+
+def test_live_expectation_rejects_unproven_fault(tmp_path):
+    log = tmp_path / "faults.log"
+    log.write_text(
+        'AUTODIAG_FAULT name=ora7445 problem_key="ORA 7445 [kcbrls]" '
+        "incident_ids=[] traces=[] status=MISSING\n"
+    )
+    with pytest.raises(AssertionError, match="no successful"):
+        live_expectation(load("ora7445_busy_loop")["expect"], log)
 
 
 @pytest.fixture
@@ -117,8 +164,10 @@ def test_headless_agent_mentions_expected_keywords(name: str, tmp_path: Path) ->
     if not exe:
         pytest.skip("opencode not installed")
     sc = load(name)
+    fault_log = os.environ.get("AUTODIAG_EVAL_FAULT_LOG")
+    expect = live_expectation(sc["expect"], Path(fault_log) if fault_log else None)
     prompt = (
-        f"Target testbed: triage the problem key {sc['expect']['problem_key']} "
+        f"Target testbed: triage the problem key {expect['problem_key']} "
         "with standard_triage, "
         "then give the answer in the skill's format. Keep it under 300 words."
     )
@@ -135,6 +184,7 @@ def test_headless_agent_mentions_expected_keywords(name: str, tmp_path: Path) ->
     )
     texts = []
     errors = []
+    triage_outputs = []
     for line in proc.stdout.splitlines():
         try:
             ev = json.loads(line)
@@ -143,6 +193,11 @@ def test_headless_agent_mentions_expected_keywords(name: str, tmp_path: Path) ->
         if ev.get("type") == "error":
             errors.append(ev.get("error", {}).get("name", "unknown error"))
         part = ev.get("part") or {}
+        if part.get("type") == "tool" and "standard_triage" in part.get("tool", ""):
+            state = part.get("state") or {}
+            if state.get("status") == "completed":
+                output = state.get("output", "")
+                triage_outputs.append(output if isinstance(output, str) else json.dumps(output))
         if part.get("type") == "text":
             texts.append(part.get("text", ""))
     answer = "\n".join(texts)
@@ -151,7 +206,19 @@ def test_headless_agent_mentions_expected_keywords(name: str, tmp_path: Path) ->
         "Check the client logs and 'opencode models'; set AUTODIAG_EVAL_OPENCODE_MODEL "
         "to override a stale default model."
     )
-    missing = [k for k in sc["expect"]["answer_keywords"] if k.lower() not in answer.lower()]
+    if fault_log:
+        version = os.environ.get("AUTODIAG_EVAL_EXPECT_VERSION_PREFIX", "")
+        assert any(
+            expect["problem_key"] in output
+            and any(str(i) in output for i in expect["live_incident_ids"])
+            and '"artifact_id"' in output
+            and version in output
+            for output in triage_outputs
+        ), (
+            "No completed standard_triage tool result matches the fresh incident "
+            "and expected version"
+        )
+    missing = [k for k in expect["answer_keywords"] if k.lower() not in answer.lower()]
     assert not missing, f"answer lacks {missing}:\n{answer[:1500]}"
 
 

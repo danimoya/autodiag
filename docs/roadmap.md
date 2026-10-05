@@ -1,6 +1,6 @@
 # Roadmap and known gaps
 
-Reviewed against source and tests on 2026-10-04. The package version is **0.1.0**;
+Reviewed against source and tests on 2026-10-05. The package version is **0.1.0**;
 earlier v1.0/v1.1 phase labels were planning labels, not package releases.
 
 ## Implemented
@@ -13,7 +13,7 @@ earlier v1.0/v1.1 phase labels were planning labels, not package releases.
   direct Ollama assessment, quote verification and an explicit rules fallback.
 - RAC alert correlation within two minutes and grouping ADR problems by problem key.
   Individual incident sequences are not yet correlated by time across instances.
-- Oracle Free 23ai container with real ORA-600/700/7445, deadlock, hang and SQL-trace
+- Oracle Free containers with real ORA-600/700/7445, deadlock, hang and SQL-trace
   material, parser tests and evaluation scenarios.
 
 ## Reliability corrections implemented
@@ -56,9 +56,11 @@ already overwritten by ID collisions.
 
 ## Known limitations
 
-- **19c fixtures**: the testbed runs Oracle Database Free 23ai, so all trace fixtures are
-  23ai. The parsers accept the 19c layouts by design, but no real 19c incident, 10046 or
-  deadlock trace is in the fixture set yet. Add anonymised 19c traces under
+- **Fixture versions**: the historical `tests/fixtures/23ai/` directory contains 26ai
+  captures (the banners report 23.26.3), despite its name. Fresh 23ai 23.9 evidence was
+  validated separately on 2026-10-05; it has not replaced those fixtures. The parsers
+  accept 19c layouts by design, but no real 19c incident, 10046 or deadlock trace is in
+  the fixture set yet. Add anonymised 19c traces under
   `tests/fixtures/19c/` and extend the parametrised parser tests.
 - **ORA-600 / ORA-700 generation** needs ORADEBUG, which the Free edition ships disabled;
   the testbed enables it on first start (see `docs/testbed.md`). Real incidents from the
@@ -83,13 +85,36 @@ already overwritten by ID collisions.
 
 - Default regression suite: 212 passed; the 13 live tests are excluded by default.
   Distribution install smoke, lint, formatting and repository hygiene checks passed.
-- All 11 Oracle integration checks passed against the Oracle Free 23ai Docker testbed:
+- All 11 Oracle integration checks passed against the original Oracle Free Docker testbed
+  (subsequently verified as 26ai 23.26.3, not the release implied by its `23ai` image tag):
   SSH/ADR, incident/trace roundtrip, alert logs, SQL*Net, PDB switching, ASH and diagnosis.
 - The configured 27B Ollama model produced a verified assessment of the repeated ORA-600.
 - OpenCode 1.18.32 completed the MCP investigation using `deepseek/deepseek-flash`.
   Its first run failed because the configured `deepseek/deepseek-v4-flash` identifier no
   longer appeared in the client's model catalog. An explicit test override fixed the run.
 - Live runs used temporary case storage. These results do not validate 19c or real RAC.
+
+## Pinned 23ai verification on 2026-10-05
+
+- Separate AMD64 testbed in `testbed/compose.23ai.yaml`, pinned to the Oracle 23.9 image
+  digest. SQL confirmed **Oracle Database 23ai Free, version 23.9.0.25.07**. The original
+  26ai container and its storage were not changed.
+- Nine fault-kit scenarios produced fresh evidence: ORA-600, repeated ORA-600, ORA-700,
+  ORA-7445, deadlock, errorstack, hang/systemstate, paired 10046 and 10053 traces.
+- A separately guarded disposable-datafile test produced a real ORA-01578; AutoDiag
+  detected it in the alert log. The test tablespace and datafile were removed afterwards.
+- **13 live tests passed**, including direct Ollama and OpenCode. The latter now uses
+  the fresh ORA-7445 proof and verifies a completed MCP result contains the incident
+  and expected database version, in addition to checking the answer.
+- **136 extended checks passed**, covering all 34 MCP tool invocations, 24 SQL catalog
+  queries, reports, diagnosis, baselines, scans, GUI/REST and a valid IPS ZIP. AHF job
+  failure handling worked, but AHF collection itself remains unavailable in this image.
+- **25 CLI checks passed**. Both combined and standalone HTTP services rejected missing
+  and incorrect tokens and executed authenticated MCP queries against the real database.
+- **219 default regression tests passed**. Testbed fixes handle tab-padded SQL*Plus
+  schema probes and mixed-width incident-ID sorting. The image now includes `zip`.
+- Real RAC/Exadata/ExaCC, 19c, ORA-1555, ORA-4030 and ORA-4031 are not established by
+  this run. Successful catalog execution on a single instance is not RAC validation.
 
 ```bash
 .venv/bin/pytest -q
