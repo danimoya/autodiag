@@ -69,6 +69,31 @@ tool. Every tool result carries an `evidence_id`; findings must cite evidence id
 
 ## Deployment
 
+### OpenAI-compatible assessment endpoints
+
+Ollama remains the default. To use a Chat Completions server (for example vLLM,
+LM Studio, or a hosted compatible provider), set these in `config.toml`:
+
+```toml
+llm_provider = "openai"
+openai_base_url = "http://127.0.0.1:8000/v1"
+openai_model = "your-model-name"
+openai_response_format = "json_object"
+openai_request_timeout = 300.0
+openai_num_ctx = 32768
+```
+
+The base URL includes the API prefix; AutoDiag appends `/chat/completions`.
+Authentication is optional for local servers. Put `AUTODIAG_OPENAI_API_KEY` in
+the private `autodiag.env` file when required. All settings also accept the
+`AUTODIAG_` environment prefix. `--model` overrides the selected provider's model.
+Use `openai_response_format = "json_schema"` for servers supporting schema output,
+or `"none"` for servers without a response-format parameter. Output is parsed,
+validated, and checked against evidence in every mode. Request failures retain
+the rules-only assessment fallback. Restart running services after changing settings.
+
+### Installation
+
 `python3.11 -m venv .venv && .venv/bin/pip install -e .` then `systemd/autodiag.service`
 as a user unit (`systemctl --user enable --now autodiag`). The unit uses `%h`, so it needs
 no editing per host.
@@ -91,8 +116,9 @@ keep it honest.
    correlation item; a message seen on one node only is flagged too. Live checks over
    SQL*Net are catalog queries whose rows are judged by small deterministic functions
    (an instance not OPEN is critical, a PDB not open or a blocked session is a warning).
-2. **Assess** (`llm/assess.py`, `llm/ollama.py`). The dossier is rendered highest severity
-   first inside a byte budget derived from `ollama_num_ctx`, redacted at that boundary,
+2. **Assess** (`llm/assess.py`, `llm/ollama.py`, `llm/openai_compatible.py`). The dossier is
+   rendered highest severity first inside a byte budget derived from the provider's
+   context setting (`ollama_num_ctx` or `openai_num_ctx`), redacted at that boundary,
    and sent to Ollama with a JSON schema (`AssessmentDraft`) and thinking disabled. The
    answer is verified: every proof must quote text that occurs in the cited item (or in
    another item, which is then cited instead). Concerns with no verified proof are

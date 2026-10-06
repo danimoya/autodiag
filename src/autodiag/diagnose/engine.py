@@ -13,6 +13,7 @@ from autodiag.diagnose.collect import collect_alert, collect_instance, collect_p
 from autodiag.diagnose.models import Assessment, Diagnosis, Dossier
 from autodiag.llm.assess import OllamaAssessor, rules_assessment
 from autodiag.llm.ollama import OllamaClient, OllamaError
+from autodiag.llm.openai_compatible import OpenAICompatibleClient
 
 MODES = ("problem", "alert", "instance")
 Assessor = Callable[[Dossier], Assessment]
@@ -21,6 +22,20 @@ Assessor = Callable[[Dossier], Assessment]
 def default_assessor(
     settings: Settings, *, model: str | None = None, redact: bool = True
 ) -> OllamaAssessor:
+    if settings.llm_provider == "openai":
+        return OllamaAssessor(
+            OpenAICompatibleClient(
+                settings.openai_base_url,
+                api_key=(
+                    settings.openai_api_key.get_secret_value() if settings.openai_api_key else None
+                ),
+                timeout=settings.openai_request_timeout,
+                response_format=settings.openai_response_format,
+            ),
+            model or settings.openai_model,
+            redact=redact,
+            max_bytes=int(settings.openai_num_ctx * 3 * 0.6),
+        )
     client = OllamaClient(
         settings.ollama_primary_url,
         settings.ollama_fallback_url,

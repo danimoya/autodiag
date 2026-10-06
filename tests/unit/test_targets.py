@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from autodiag.core.models import Target, TargetKind
-from autodiag.core.targets import TargetInventory, load_targets
+from autodiag.core.targets import TargetInventory, load_targets, remove_target
 
 
 def test_load_targets_from_yaml(fixtures_dir: Path) -> None:
@@ -63,3 +63,21 @@ def test_target_is_pydantic_model() -> None:
     t = Target(name="x", nodes=[{"host": "h"}])
     assert t.redact is True
     assert t.platform.value == "generic"
+
+
+def test_remove_preserves_other_targets_and_backup(tmp_path, fixtures_dir):
+    path = tmp_path / "targets.yaml"
+    original = (fixtures_dir / "config" / "targets.yaml").read_text()
+    path.write_text(original)
+    before = load_targets(path).get("prod-rac")
+    backup = remove_target(path, "testbed")
+    assert backup.read_text() == original
+    assert backup.stat().st_mode & 0o777 == 0o600
+    assert load_targets(path).names() == ["prod-rac"]
+    assert load_targets(path).get("prod-rac") == before
+    remove_target(path, "prod-rac")
+    assert load_targets(path).names() == []
+    contents = path.read_text()
+    with pytest.raises(KeyError):
+        remove_target(path, "missing")
+    assert path.read_text() == contents

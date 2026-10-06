@@ -22,6 +22,7 @@ from autodiag.diagnose.models import (
     worst,
 )
 from autodiag.llm.ollama import OllamaClient, OllamaError
+from autodiag.llm.openai_compatible import OpenAICompatibleClient
 
 SYSTEM_PROMPT = (
     resources.files("autodiag.llm.prompts").joinpath("assess_system.md").read_text("utf-8")
@@ -253,11 +254,11 @@ def rules_assessment(dossier: Dossier, *, note: str | None = None) -> Assessment
 
 
 class OllamaAssessor:
-    """Callable(dossier) -> Assessment using an Ollama model with structured output."""
+    """Callable(dossier) -> Assessment using a model with verified JSON output."""
 
     def __init__(
         self,
-        client: OllamaClient,
+        client: OllamaClient | OpenAICompatibleClient,
         model: str,
         *,
         redact: bool = True,

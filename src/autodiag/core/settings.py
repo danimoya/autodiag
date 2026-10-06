@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -67,6 +68,13 @@ class Settings(BaseSettings):
     mcp_token: str | None = Field(default=None, description="Bearer token for /mcp and /api")
 
     # LLM (optional; the core never needs it)
+    llm_provider: Literal["ollama", "openai"] = "ollama"
+    openai_base_url: str = "http://127.0.0.1:8000/v1"
+    openai_api_key: SecretStr | None = None
+    openai_model: str = "default"
+    openai_request_timeout: float = Field(default=300.0, gt=0)
+    openai_num_ctx: int = Field(default=32768, gt=0)
+    openai_response_format: Literal["json_object", "json_schema", "none"] = "json_object"
     ollama_primary_url: str = "http://127.0.0.1:11434"
     ollama_fallback_url: str | None = None
     ollama_advisor_model: str = "qwen3:27b"

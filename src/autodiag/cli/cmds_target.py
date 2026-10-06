@@ -1,8 +1,35 @@
 import typer
 
 from autodiag.cli import common
+from autodiag.core.targets import remove_target
 
 app = typer.Typer(help="Target inventory (databases AutoDiag may reach).")
+
+
+@app.command("remove")
+def remove_target_command(
+    name: str = typer.Argument(..., help="Target name to remove from the inventory."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON instead of text."),
+) -> None:
+    """Remove a target, keeping a backup of the inventory and existing case data."""
+    settings = common.settings()
+    common.target(name, settings)
+    if not yes:
+        typer.confirm(f"Remove target {name!r} from {settings.targets_file}?", abort=True)
+    try:
+        backup = remove_target(settings.targets_file, name)
+    except (OSError, ValueError, KeyError, RuntimeError) as exc:
+        typer.echo(f"Could not remove target: {exc}", err=True)
+        raise typer.Exit(code=1) from None
+    common.emit(
+        {"removed": name, "backup": str(backup)},
+        as_json=as_json,
+        lines=[
+            f"Removed target {name!r}. Inventory backup: {backup}",
+            "Restart running AutoDiag services to reload the inventory.",
+        ],
+    )
 
 
 @app.command("list")

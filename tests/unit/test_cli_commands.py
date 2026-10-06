@@ -29,6 +29,25 @@ def test_targets_list() -> None:
     assert "testbed" in r.output and "prod-rac" in r.output
 
 
+def test_targets_remove(tmp_path, fixtures_dir, monkeypatch):
+    path = tmp_path / "targets.yaml"
+    original = (fixtures_dir / "config" / "targets.yaml").read_text()
+    path.write_text(original)
+    monkeypatch.setenv("AUTODIAG_TARGETS_FILE", str(path))
+    declined = runner.invoke(app, ["targets", "remove", "testbed"], input="n\n")
+    assert declined.exit_code != 0
+    assert path.read_text() == original
+    missing = runner.invoke(app, ["targets", "remove", "missing", "--yes"])
+    assert missing.exit_code == 1 and "unknown target" in missing.output
+    removed = runner.invoke(app, ["targets", "remove", "testbed", "--yes", "--json"])
+    assert removed.exit_code == 0, removed.output
+    result = json.loads(removed.output)
+    assert result["removed"] == "testbed"
+    assert Path(result["backup"]).read_text() == original
+    listed = runner.invoke(app, ["targets", "list"])
+    assert "testbed" not in listed.output and "prod-rac" in listed.output
+
+
 def test_adr_problems_and_incidents() -> None:
     r = runner.invoke(app, ["adr", "problems", "--target", "testbed", "--days", "3"])
     assert r.exit_code == 0, r.output

@@ -20,7 +20,7 @@ _CASE = typer.Option(
     None, "--case", help="Record evidence and findings in this case ('new' opens one)."
 )
 _NO_ASSESS = typer.Option(False, "--no-assess", help="Skip the model; rank by rules only.")
-_MODEL = typer.Option(None, "--model", help="Ollama model (default: ollama_advisor_model).")
+_MODEL = typer.Option(None, "--model", help="Override the configured provider's advisor model.")
 _JSON = typer.Option(False, "--json", help="Emit the full diagnosis as JSON.")
 _DOSSIER = typer.Option(False, "--dossier", help="Also print every dossier item.")
 _MD = typer.Option(None, "--markdown", help="Write the diagnosis as Markdown to this file.")

@@ -39,7 +39,8 @@ autodiag diagnose instance -t prod01 --live                      # whole RAC, al
 ```
 
 The collectors are deterministic and record every item as evidence in a case. The model
-(Ollama, `ollama_advisor_model`) reads a bounded, redacted dossier and returns JSON; each
+(Ollama by default, or an OpenAI-compatible endpoint configured via `llm_provider`)
+reads a bounded, redacted dossier and returns JSON; each
 proof it cites is checked against the dossier and unproven claims are demoted to open
 questions. Without a reachable model, or with `--no-assess`, the same dossier is ranked by
 the severity rules and labelled as such. `--case new` records the proven concerns as
@@ -98,6 +99,7 @@ explanation hints.
 |---|---|
 | `autodiag targets list` | List the configured targets (name, kind, platform, version, nodes, SQL*Net). |
 | `autodiag targets show NAME` | Nodes, SSH aliases, ADR base and homes, allowed roots for one target. |
+| `autodiag targets remove NAME [--yes] [--json]` | Remove an inventory entry with confirmation (skip with `--yes`), retaining an inventory backup and case history. Restart running services to reload their inventory. |
 
 ### `autodiag adr`
 

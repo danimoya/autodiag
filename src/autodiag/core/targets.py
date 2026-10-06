@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+import shutil
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -41,3 +44,29 @@ def load_targets(path: Path) -> TargetInventory:
         return TargetInventory()
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return TargetInventory.model_validate(data)
+
+
+def remove_target(path: Path, name: str) -> Path:
+    """Remove one inventory entry, retaining a private backup and all other values.
+
+    Does not touch databases, SSH settings, secrets, or historical case data.
+    """
+    path = path.resolve()
+    original = path.read_text(encoding="utf-8") if path.is_file() else ""
+    data = yaml.safe_load(original) or {}
+    TargetInventory.model_validate(data).get(name)  # fail before writing on unknown names
+    data["targets"] = [t for t in data["targets"] if t["name"] != name]
+    backup_fd, backup_name = tempfile.mkstemp(prefix=path.name + ".bak-", dir=path.parent)
+    with os.fdopen(backup_fd, "w", encoding="utf-8") as backup:
+        backup.write(original)
+    fd, temporary = tempfile.mkstemp(prefix=path.name + ".tmp-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            yaml.safe_dump(data, output, sort_keys=False)
+        shutil.copymode(path, temporary)
+        if path.read_text(encoding="utf-8") != original:
+            raise RuntimeError("inventory changed during removal; retry")
+        os.replace(temporary, path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+    return Path(backup_name)
