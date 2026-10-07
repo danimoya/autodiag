@@ -43,14 +43,17 @@ def classify(record: AlertRecord) -> Classification:
     they carry an ORA code or an incident."""
     head = record.lines[0] if record.lines else ""
     body = record.text
+    xml_error = record.msg_type in {"2", "3", "INCIDENT_ERROR", "ERROR"}
     for rule in load_rules():
         if rule.regex().search(head) or (
             rule.severity in (Severity.CRITICAL, Severity.WARNING) and rule.regex().search(body)
         ):
             sev = rule.severity
-            if sev is Severity.NOISE and (record.ora_codes or record.incident_id):
+            if sev is Severity.NOISE and (record.ora_codes or record.incident_id or xml_error):
                 sev = Severity.WARNING
             return Classification(severity=sev, category=rule.category, rule=rule.pattern)
+    if xml_error:
+        return Classification(severity=Severity.WARNING, category="error", rule="xml_error")
     if record.incident_id is not None or record.ora_codes:
         return Classification(severity=Severity.WARNING, category="error", rule="ora_code")
     return Classification(severity=Severity.INFO, category="other", rule="default")

@@ -37,10 +37,16 @@ evidence land in the target's scratch case (`scratch: <target>`).
 | `diagnose_problem` | `target`, `problem_key` or `incident_id`, optional `node`/`adr_home`, `case_id`, `assess=false`, `record=false`, `max_incidents=5`, `max_bytes=24000` | Dossier items (each with an `id` to cite, `kind`, `severity_hint`, `ts`, `node`, `title`, `text`), `noise` counts, `counts`, `stats`, `errors`, the `assessment`, `finding_ids`, a rendered `text` |
 | `diagnose_alert` | `target`, `hours=24` or `since`/`until` (ISO 8601), `case_id`, `assess`, `record`, `max_bytes` | same shape |
 | `diagnose_instance` | `target`, `days=7`, `hours=24`, `live` (null = auto when SQL*Net is configured), `case_id`, `assess`, `record`, `max_bytes` | same shape |
+| `diagnose_performance` | `target`, `instance_id=0` (all), `sample_seconds=5` (1–60), `case_id`, `assess=false`, `record=false`, `max_bytes` | same diagnosis shape; sampled per-instance performance, configured Ollama/OpenAI-compatible assessment when `assess=true` |
+
+Performance catalog queries: `performance_counters` samples per-instance time model,
+waits and throughput; `performance_sessions` reads active sessions and blockers;
+`performance_sql` reads top SQL by cursor-lifetime elapsed time. All accept
+`instance_id=0` (all instances); sessions/SQL additionally accept `top`. None uses ASH/AWR.
 
 `assess=false` (the default for agents) returns the rules ranking as `assessment`; the
 calling agent is expected to be the assessor and to cite item ids. `assess=true` asks the
-local Ollama model and returns its verified assessment (`model`, `proofs_total`,
+configured Ollama or OpenAI-compatible model and returns its verified assessment (`model`, `proofs_total`,
 `proofs_verified`, `grounded`, `notes`). `record=true` stores proven concerns as findings.
 `max_bytes` trims item texts to fit the caller's output limit (OpenCode truncates tool
 output at 50 KB); omitted texts say so and remain readable through `get_case` evidence.

@@ -5,6 +5,15 @@
 <table><tr><th>host</th><th>ssh</th><th>instance</th><th>ORACLE_HOME</th></tr>
 {% for n in t.nodes %}<tr><td>{{ n.host }}</td><td>{{ n.ssh_target }}</td><td>{{ n.instance or '-' }}</td><td>{{ n.oracle_home or '-' }}</td></tr>{% endfor %}</table>
 <p>ADR base <code>{{ t.adr_base }}</code>; homes {% for h in t.adr_homes %}<code>{{ h }}</code> {% endfor %}; allowed roots {% for r in t.allowed_roots %}<code>{{ r }}</code> {% endfor %}</p>
+{% if t.component == 'rdbms' and t.sqlnet %}
+<h2>Performance diagnosis</h2>
+<form method="post" action="/targets/{{ t.name }}/diagnose">
+<input type="hidden" name="mode" value="performance">
+<label>Instance ID (0 = all) <input name="instance_id" type="number" min="0" value="0"></label>
+<label>Sample seconds <input name="sample_seconds" type="number" min="1" max="60" value="5"></label>
+<button type="submit">Collect and assess performance</button>
+</form>
+{% endif %}
 <h2>Baselines</h2>
 <table><tr><th>id</th><th>kind</th><th>artifact</th><th>label</th><th>created</th></tr>
 {% for b in baselines %}<tr><td>{{ b.id }}</td><td>{{ b.kind }}</td><td><a href="/artifacts/{{ b.artifact_id }}">{{ b.artifact_id }}</a></td><td>{{ b.label }}</td><td>{{ b.created_at | ts }}</td></tr>{% else %}<tr><td colspan="5" class="muted">none</td></tr>{% endfor %}</table>

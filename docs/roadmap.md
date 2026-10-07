@@ -1,16 +1,26 @@
 # Roadmap and known gaps
 
-Reviewed against source and tests on 2026-10-05. The package version is **0.1.0**;
+Reviewed against source and tests on 2026-10-06. The package version is **0.1.0**;
 earlier v1.0/v1.1 phase labels were planning labels, not package releases.
 
 ## Implemented
 
 - ADR collection, trace parsers, stack/10046/alert-rate comparisons, SQL catalog,
   cases and evidence, DBA/SR reports, environment capture and baselines.
-- CLI, web/REST, **34 MCP tools**, OpenCode integration, scheduled scans,
+- CLI, web/REST, MCP tools, OpenCode integration, scheduled scans,
   notifications and retention.
-- Automated `diagnose problem|alert|instance`: bounded dossier, noise suppression,
-  direct Ollama assessment, quote verification and an explicit rules fallback.
+- Automated `diagnose problem|alert|instance|performance`: bounded dossiers,
+  Ollama/OpenAI-compatible assessment, quote verification and an explicit rules fallback.
+- `diagnose performance`: sampled instance counters, live sessions/blockers and
+  cursor-lifetime top SQL without ASH/AWR; CLI, MCP/REST and GUI. See [CLI reference](cli.md#autodiag-diagnose).
+- SSH/sudo discovery of running local DB/ASM/CRS ADR targets. CRS/ASM discovery and
+  rules-only diagnosis passed for all six targets on the two-node 26ai 23.26.1 lab
+  on 2026-10-06. Both DB instances and their PDBs are open; sampled performance
+  collection was also checked across both instances and for instance 2 alone.
+  Follow-up checks passed custom DB/ASM ADR destinations, node-2 restart recovery,
+  file-based CRS/ASM IPS packages on both nodes and a fresh wheel installation.
+  This does not validate 19c, Oracle Restart or real-incident extraction/IPS workflows.
+  See [testbed status](testbed.md#26ai-rac-lab).
 - RAC alert correlation within two minutes and grouping ADR problems by problem key.
   Individual incident sequences are not yet correlated by time across instances.
 - Oracle Free containers with real ORA-600/700/7445, deadlock, hang and SQL-trace
@@ -35,8 +45,9 @@ already overwritten by ID collisions.
 
 1. **Real-estate validation:** anonymised 19c traces and alert logs, real RAC/ExaCC
    integration coverage, severity-rule tuning, per-target rule overrides and ASH
-   timezone alignment. The container is single-instance 23ai; mocked multi-node tests
-   do not establish real RAC compatibility.
+   timezone alignment. Single-instance 23ai/26ai and the two-node 26ai RAC lab have
+   bounded runtime evidence above; this does not establish other-version RAC,
+   Oracle Restart or ExaCC compatibility.
 2. **Collection and workflow:** asynchronous web diagnosis, historical alert-log
    rotation/window retrieval, and `diagnose sql` for paired 10046 traces.
 3. **Diagnostic integrations:** complete the partial collectors below.

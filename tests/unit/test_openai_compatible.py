@@ -18,6 +18,8 @@ def test_request_and_usage(mode, key):
         body = json.loads(request.content)
         assert body["model"] == "advisor"
         assert "options" not in body and "think" not in body
+        if mode != "json_schema":
+            assert '"type": "object"' in body["messages"][0]["content"]
         if mode == "none":
             assert "response_format" not in body
         else:

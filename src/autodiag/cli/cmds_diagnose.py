@@ -147,3 +147,28 @@ def instance(
         model=model,
     )
     _emit(d, as_json=as_json, dossier=dossier, markdown=markdown)
+
+
+@app.command("performance")
+def performance(
+    target: str = _T,
+    instance_id: int = typer.Option(0, "--instance-id", min=0, help="GV$ instance ID; 0 = all."),
+    sample_seconds: float = typer.Option(5, "--sample-seconds", min=1, max=60),
+    case: str = _CASE,
+    no_assess: bool = _NO_ASSESS,
+    model: str = _MODEL,
+    as_json: bool = _JSON,
+    dossier: bool = _DOSSIER,
+    markdown: Path = _MD,
+) -> None:
+    """Troubleshoot instance performance with sampled counters, sessions, SQL and LLM proofs."""
+    d = _run(
+        mode="performance",
+        target=target,
+        instance_id=instance_id,
+        sample_seconds=sample_seconds,
+        case=case,
+        assess=not no_assess,
+        model=model,
+    )
+    _emit(d, as_json=as_json, dossier=dossier, markdown=markdown)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -29,6 +30,8 @@ class Node(BaseModel):
     ssh_port: int = 22
     instance: str | None = Field(default=None, description="Instance name on this node")
     oracle_home: str | None = None
+    sudo_user: str | None = Field(default=None, pattern=r"^[a-zA-Z_][a-zA-Z0-9_-]*[$]?$")
+    adr_base: str | None = None
 
     @property
     def ssh_target(self) -> str:
@@ -62,6 +65,7 @@ class Target(BaseModel):
 
     name: str
     kind: TargetKind = TargetKind.SINGLE
+    component: Literal["rdbms", "crs", "asm"] = "rdbms"
     platform: Platform = Platform.GENERIC
     oracle_version: str | None = None
     db_unique_name: str | None = None
@@ -92,6 +96,12 @@ class Target(BaseModel):
     @property
     def allowed_roots(self) -> list[str]:
         roots = [f"{self.adr_base.rstrip('/')}/diag"] if self.adr_base else []
+        return roots + list(self.extra_roots) + [self.ips_dest]
+
+    def allowed_roots_for(self, node: Node) -> list[str]:
+        """Restrict this node to its own ADR base, not another cluster member's."""
+        base = node.adr_base or self.adr_base
+        roots = [f"{base.rstrip('/')}/diag"] if base else []
         return roots + list(self.extra_roots) + [self.ips_dest]
 
     def node_for_instance(self, instance: str) -> Node:

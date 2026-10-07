@@ -94,6 +94,66 @@ def failing_assessor(dossier: Dossier):
     raise OllamaError("no endpoint")
 
 
+@pytest.mark.parametrize("new_counter", [False, True])
+def test_performance_collector_and_assessor(ctx, monkeypatch, new_counter):
+    from autodiag.diagnose import performance
+
+    class PerformanceRunner(FakeRunner):
+        sample = 0
+
+        ROWS = {
+            **FakeRunner.ROWS,
+            "performance_sessions": (["INST_ID", "EVENT"], [[1, "db file sequential read"]]),
+        }
+
+        def run_named(self, name, params=None, **kw):
+            if name == "performance_counters":
+                self.sample += 1
+                return QueryResult(
+                    name=name,
+                    columns=["INST_ID", "STARTUP_TIME", "CATEGORY", "METRIC", "VALUE"],
+                    rows=[[1, "start", "time_us", "DB time", self.sample * 5000000]]
+                    + (
+                        [[1, "start", "wait_us", "new wait", 100]]
+                        if new_counter and self.sample == 2
+                        else []
+                    ),
+                )
+            return super().run_named(name, params, **kw)
+
+    runner = PerformanceRunner()
+    ctx.runner_factory = lambda t: runner
+    monkeypatch.setattr(performance.time, "sleep", lambda n: None)
+    d = diagnose(
+        ctx,
+        mode="performance",
+        target="testbed",
+        instance_id=1,
+        assessor=grounded_assessor,
+        record=True,
+    )
+    assert d.dossier.mode == "performance"
+    assert not d.dossier.errors
+    assert d.dossier.stats["new_counters"] == int(new_counter)
+    assert len(d.dossier.items) == 6
+    assert d.assessment.proofs_verified == 1
+    assert d.finding_ids
+    assert "performance_sql" in runner.calls and "performance_sessions" in runner.calls
+    assert not any("ash" in name or "awr" in name for name in runner.calls)
+
+
+def test_performance_missing_sql_is_explicit(ctx):
+    ctx.runner_factory = lambda t: None
+    d = diagnose(ctx, mode="performance", target="testbed", assess=False)
+    assert "SQL*Net" in d.dossier.errors[0]
+
+
+def test_performance_rejects_crs(ctx):
+    ctx.inventory.get("testbed").component = "crs"
+    with pytest.raises(ValueError, match="database target"):
+        diagnose(ctx, mode="performance", target="testbed", assess=False)
+
+
 def test_problem_mode_builds_dossier_and_records_findings(ctx) -> None:
     d = diagnose(
         ctx,
@@ -174,6 +234,14 @@ def test_instance_mode_rac_correlates_nodes_and_judges_live_state(ctx) -> None:
 def test_instance_mode_without_live(ctx) -> None:
     d = diagnose(ctx, mode="instance", target="testbed", live=False, assess=False)
     assert not any(i.kind == "query" for i in d.dossier.items) and d.dossier.scope["live"] is False
+
+
+def test_markdown_empty_dismissed_has_explicit_none(ctx):
+    from autodiag.diagnose.render import diagnosis_markdown
+
+    d = diagnose(ctx, mode="instance", target="testbed", live=False, assess=False)
+    d.assessment.dismissed = []
+    assert "## Dismissed\n- none" in diagnosis_markdown(d)
 
 
 def test_bad_mode_and_missing_key(ctx) -> None:

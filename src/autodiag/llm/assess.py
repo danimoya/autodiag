@@ -45,7 +45,8 @@ def dossier_text(
     return the exact per-item text the model saw, which proofs are verified against."""
     head = [
         "AUTODIAG DOSSIER",
-        f"target: {dossier.target} ({dossier.target_kind}, {dossier.platform}, "
+        f"target: {dossier.target} ({dossier.component}, {dossier.target_kind}, "
+        f"{dossier.platform}, "
         f"Oracle {dossier.oracle_version or 'unknown'}) | mode: {dossier.mode} | scope: "
         + ", ".join(f"{k}={v}" for k, v in dossier.scope.items()),
         f"nodes: {', '.join(dossier.nodes) or '-'} | "

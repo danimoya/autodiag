@@ -76,14 +76,28 @@ class SshTransport:
         return argv
 
     def remote_command(self, argv: Sequence[str]) -> str:
+        argv = list(argv)
+        if argv and argv[0] == "adrci" and self.node.adr_base:
+            base = self.node.adr_base
+            # ADRCI has its own command language, distinct from shell quoting.
+            import re
+
+            if not re.fullmatch(r"/[A-Za-z0-9_./-]+", base) or ".." in base.split("/"):
+                raise ValueError("ADR base must be a clean absolute path")
+            argv[1] = argv[1].replace("exec=", f"exec=set base {base}; ", 1)
         exports: list[str] = []
+        if self.node.sudo_user:
+            # sudo preserves the SSH user's cwd, which may be mode 0700 and
+            # inaccessible to grid/oracle. ADRCI IPS needs an accessible cwd.
+            exports.append("cd / || exit 1")
         if self.node.oracle_home:
             exports.append(f"export ORACLE_HOME={shlex.quote(self.node.oracle_home)}")
             exports.append('export PATH="$ORACLE_HOME/bin:$PATH"')
         if self.node.instance:
             exports.append(f"export ORACLE_SID={shlex.quote(self.node.instance)}")
         script = "; ".join([*exports, remote_shell_line(argv)])
-        return f"bash -lc {shlex.quote(script)}"
+        prefix = f"sudo -n -u {shlex.quote(self.node.sudo_user)} -- " if self.node.sudo_user else ""
+        return f"{prefix}bash -lc {shlex.quote(script)}"
 
     # -- execution ------------------------------------------------------------------
     def run(

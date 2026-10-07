@@ -31,7 +31,7 @@ tool. Every tool result carries an `evidence_id`; findings must cite evidence id
 | `kb/` | YAML knowledge base (ORA-600/7445 keys, alert signatures, wait events, Exadata checks) and lookup |
 | `case/` | SQLite case store: cases, artifacts (hashed copies), evidence, findings, baselines, reports, jobs, problem snapshots |
 | `report/` | timeline merge, environment capture, Jinja2 DBA and SR templates, context builder |
-| `mcp/` | the `autodiag` MCP server: 34 tools with caps, paging, redaction, background jobs, `standard_triage` |
+| `mcp/` | the `autodiag` MCP server: tools with caps, paging, redaction, background jobs, `standard_triage` |
 | `web/` | HTML UI, `/api/v1/tools/<name>` REST endpoint, bearer middleware, MCP mount |
 | `cli/` | `autodiag` command groups: targets, adr, alert, trace, diff, case, report, kb, mcp, serve |
 
@@ -59,6 +59,57 @@ tool. Every tool result carries an `evidence_id`; findings must cite evidence id
   `AUTODIAG_MCP_TOKEN` is set; HTML pages are meant for a reverse proxy with its own auth.
 
 ## Configuration (all outside the repository)
+
+### Discovering existing Linux hosts
+
+```bash
+autodiag targets discover admin@dbhost --dry-run --json
+autodiag targets discover admin@dbhost
+```
+
+The host must already have a trusted SSH host key, passwordless SSH, noninteractive
+sudo and Python 3. A fixed read-only probe examines running PMON and CRS processes,
+resolves their installation owners/homes, and queries ADRCI. For running DB/ASM,
+it queries `V$DIAG_INFO` using local OS authentication (`SYSDBA`/`SYSASM`) to find
+the actual ADR base/home, including a custom `DIAGNOSTIC_DEST`. If that query is
+unavailable, it warns and falls back to `orabase`; CRS uses `orabase`. No SQL
+credentials are collected or saved. Each local
+DB/ASM/CRS instance becomes a separate target, preserving the SSH login and using
+`sudo -n -u OWNER` for subsequent diagnostics. Existing target names are never
+overwritten; additions save an inventory backup. Saving normalizes YAML formatting
+and removes comments; the private backup preserves the original file. An empty
+`targets:` value is treated as an empty list. Stopped databases, other container
+namespaces and remote cluster nodes are not discovered. Repeat on each RAC node;
+the results are local-instance targets, not an automatically merged RAC topology.
+When container root cannot read another user's process links, the probe retries
+those reads as the process owner via sudo; it does not relax namespace filtering.
+Setgid Oracle binaries may also deny the owner access; in that case, discovery
+reports the need to check `/proc` permissions and `CAP_SYS_PTRACE`. It never grants
+capabilities or changes the remote host itself.
+
+`component` is `rdbms` (default), `crs`, or `asm`. ADR discovery filters on that
+component. CRS alerts use `alert/log.xml`; ADRCI explicitly selects the configured
+base. `node.adr_base` and `node.sudo_user` retain the discovered execution context.
+File-access allowlists use each node's ADR base rather than another node's base.
+When switching OS owners, commands start in `/` to avoid an inaccessible SSH-user
+working directory. ADRCI diagnostic errors are surfaced even when its exit code is zero.
+Discovered targets disable Diagnostics Pack queries by default. Add read-only
+`sqlnet` configuration and its password environment reference for live SQL diagnosis;
+discovery neither creates DB users nor guesses credentials or service routing.
+Restart running services after inventory changes.
+
+### Instance performance
+
+`autodiag diagnose performance -t TARGET --instance-id 1 --sample-seconds 10`
+collects two cumulative counter snapshots and computes interval DB time, DB CPU,
+non-idle waits and throughput, rejecting resets/restarts. It also collects active
+sessions/blockers and top SQL, clearly labelled as cursor-lifetime totals. No ASH/AWR
+is queried. The configured Ollama or OpenAI-compatible assessor verifies every
+reported proof against collected evidence. CLI `--no-assess` provides raw/rules-only
+output; use `--dossier` or `--json` to inspect the performance observations.
+The same workflow is exposed as `diagnose_performance` over MCP/REST and on a
+database target's GUI page. Query failures are explicit coverage gaps. This is a
+bounded foreground sample, not historical profiling or automatic tuning.
 
 - `~/.config/autodiag/config.toml`: service, Ollama, caps, timeouts (`AUTODIAG_*` env
   variables override).

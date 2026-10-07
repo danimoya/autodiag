@@ -18,6 +18,11 @@ class TargetInventory(BaseModel):
 
     targets: list[Target] = []
 
+    @field_validator("targets", mode="before")
+    @classmethod
+    def _empty_targets(cls, value):
+        return [] if value is None else value
+
     @field_validator("targets")
     @classmethod
     def _unique_names(cls, v: list[Target]) -> list[Target]:
@@ -70,3 +75,37 @@ def remove_target(path: Path, name: str) -> Path:
     finally:
         Path(temporary).unlink(missing_ok=True)
     return Path(backup_name)
+
+
+def add_targets(path: Path, targets: list[Target]) -> tuple[list[str], list[str]]:
+    """Merge discoveries without replacing existing operator configuration."""
+    original = path.read_text(encoding="utf-8") if path.exists() else ""
+    data = yaml.safe_load(original) or {"targets": []}
+    existing = TargetInventory.model_validate(data)
+    if data.get("targets") is None:
+        data["targets"] = []
+    added, skipped = [], []
+    for target in targets:
+        if target.name in existing.names():
+            skipped.append(target.name)
+            continue
+        data.setdefault("targets", []).append(target.model_dump(mode="json", exclude_none=True))
+        existing.targets.append(target)
+        added.append(target.name)
+    if added:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd, temporary = tempfile.mkstemp(prefix=path.name + ".tmp-", dir=path.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as out:
+                yaml.safe_dump(data, out, sort_keys=False)
+            if (path.read_text(encoding="utf-8") if path.exists() else "") != original:
+                raise RuntimeError("inventory changed during discovery; retry")
+            if path.exists():
+                backup_fd, backup = tempfile.mkstemp(prefix=path.name + ".bak-", dir=path.parent)
+                with os.fdopen(backup_fd, "w", encoding="utf-8") as out:
+                    out.write(original)
+                shutil.copymode(path, temporary)
+            os.replace(temporary, path)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
+    return added, skipped

@@ -61,6 +61,7 @@ class Dossier(BaseModel):
     mode: str  # problem | alert | instance
     target: str
     target_kind: str = "single"
+    component: str = "rdbms"
     platform: str = "generic"
     oracle_version: str | None = None
     scope: dict[str, Any] = Field(default_factory=dict)

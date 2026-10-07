@@ -13,6 +13,14 @@
 Commands: `/triage`, `/compare-stacks <left artifact> <right artifact>`,
 `/compare-sqltrace <normal artifact> <anomaly artifact>`, `/sr-report <case id>`.
 
+For current instance slowness, ask the agent to call
+`diagnose_performance(target="prod01", instance_id=1, sample_seconds=10)`.
+With the default `assess=false`, the calling agent assesses the returned evidence.
+Use `assess=true` to run AutoDiag's configured Ollama/OpenAI-compatible assessor,
+and `record=true` to persist proven findings. There is no separate slash command;
+the CLI equivalent is `autodiag diagnose performance -t prod01 --instance-id 1`.
+See the [CLI reference](cli.md#autodiag-diagnose) and [MCP reference](mcp.md#automated-diagnosis).
+
 The agent has no shell: it can only call `autodiag_*` tools and read files. Findings it
 records must cite `evidence_id` values returned by tools, and the store rejects findings
 without evidence. Headless use: `opencode run --agent autodiag-triage --format json "..."`.

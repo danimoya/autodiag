@@ -115,7 +115,7 @@ def default_context(settings: Settings, inventory: TargetInventory) -> AutoDiagC
     def transport_factory(t: Target) -> Callable[[Node], Any]:
         return lambda node: SshTransport(
             node,
-            t.allowed_roots,
+            t.allowed_roots_for(node),
             ssh_config=settings.ssh_config,
             connect_timeout=settings.ssh_connect_timeout,
             default_timeout=settings.ssh_command_timeout,
@@ -1405,6 +1405,26 @@ def build_server(ctx: AutoDiagContext) -> FastMCP:
             case_id=case_id,
             assess=assess,
             record=record,
+        )
+
+    @mcp.tool
+    @guarded
+    def diagnose_performance(
+        target: str,
+        instance_id: int = 0,
+        sample_seconds: float = 5.0,
+        case_id: str | None = None,
+        assess: bool = False,
+        record: bool = False,
+        max_bytes: int = 24000,
+    ) -> dict:
+        """Sample instance DB time, CPU, waits and throughput, plus current sessions and
+        cursor-lifetime top SQL. No ASH/AWR required. Set assess=true for configured LLM."""
+        return _diag_tool(
+            "diagnose_performance",
+            {"target": target, "instance_id": instance_id, "sample_seconds": sample_seconds},
+            max_bytes, mode="performance", instance_id=instance_id,
+            sample_seconds=sample_seconds, case_id=case_id, assess=assess, record=record,
         )
 
     return mcp

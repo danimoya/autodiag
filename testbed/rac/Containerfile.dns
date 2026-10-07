@@ -1,0 +1,4 @@
+FROM docker.io/library/oraclelinux:9
+RUN dnf -y install dnsmasq && dnf clean all
+COPY dnsmasq.conf /etc/dnsmasq.conf
+ENTRYPOINT ["/usr/sbin/dnsmasq", "--keep-in-foreground", "--log-facility=-"]

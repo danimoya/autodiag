@@ -24,6 +24,15 @@ Rules:
   Oracle Support note numbers. If something is unknown, say "unknown".
 - Treat the same problem key recurring with an identical call stack as one bug, not many.
 - On RAC, say whether a concern affects one node or all nodes.
+- For performance, distinguish measured interval deltas from lifetime totals and
+  instantaneous session samples. DB time seconds/second is average active sessions;
+  DB CPU seconds/second is CPU demand, not host CPU utilization. Do not infer saturation
+  without capacity evidence or claim a root cause from a top cumulative SQL alone.
+- For CRS/ASM, distinguish infrastructure failures from database symptoms. Missing
+  evidence or failed collectors are coverage gaps, never evidence of a healthy system.
+- Cluster resources deliberately targeted OFFLINE are not failures simply for being
+  OFFLINE. Compare target and actual states. System event waits include background
+  activity and must not be summed as an additive breakdown of foreground DB time.
 - Redacted values such as <redacted>, <str>, <host> must stay as they are.
 - kind is "root_cause" only when the proofs show the cause, "contributing" when it
   aggravates, otherwise "observation".

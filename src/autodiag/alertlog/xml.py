@@ -17,22 +17,27 @@ from autodiag.alertlog.signatures import (
     signature_key,
 )
 
-_MSG = re.compile(r"<msg\b(.*?)>(.*?)</msg>", re.DOTALL)
-_ATTR = re.compile(r"([A-Za-z_][\w]*)='([^']*)'")
+_MSG = re.compile(r"<msg\b((?:[^>\"']|\"[^\"]*\"|'[^']*')*)>(.*?)</msg>", re.DOTALL)
+_ATTR = re.compile(r"([A-Za-z_][\w]*)\s*=\s*(['\"])(.*?)\2", re.DOTALL)
 _TXT = re.compile(r"<txt>(.*?)</txt>", re.DOTALL)
-_ARG = re.compile(r"<arg name='([^']*)' value='([^']*)'\s*/>")
+_ARG = re.compile(r"<arg\b((?:[^>\"']|\"[^\"]*\"|'[^']*')*)/>", re.DOTALL)
 
 
 def parse_alert_xml(text: str) -> list[AlertRecord]:
     records: list[AlertRecord] = []
     for m in _MSG.finditer(text):
-        attrs = dict(_ATTR.findall(m.group(1)))
+        attrs = {key: html.unescape(value) for key, _, value in _ATTR.findall(m.group(1))}
         body = m.group(2)
         txt_m = _TXT.search(body)
         txt = html.unescape(txt_m.group(1)) if txt_m else ""
         lines = [ln.rstrip() for ln in txt.strip("\n").splitlines()]
         lines = [ln[1:] if ln.startswith(" ") else ln for ln in lines]  # leading pad in <txt>
         joined = "\n".join(lines)
+        args = {}
+        for fragment in _ARG.findall(body):
+            arg = {key: html.unescape(value) for key, _, value in _ATTR.findall(fragment)}
+            if "name" in arg and "value" in arg:
+                args[arg["name"]] = arg["value"]
         ts = _ts(attrs.get("time"))
         line_no = text.count("\n", 0, m.start()) + 1
         records.append(
@@ -51,7 +56,7 @@ def parse_alert_xml(text: str) -> list[AlertRecord]:
                 group=attrs.get("group"),
                 level=_int(attrs.get("level")),
                 pid=_int(attrs.get("pid")),
-                args=dict(_ARG.findall(body)),
+                args=args,
                 signature=signature_key(joined),
             )
         )

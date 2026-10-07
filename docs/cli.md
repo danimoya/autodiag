@@ -36,6 +36,7 @@ dismissed and why, with every concern proven by quotes from the collected eviden
 autodiag diagnose problem  -t prod01 -k 'ORA 600 [kkslgop1]'     # or --incident 10195
 autodiag diagnose alert    -t prod01 --hours 24                  # or --since/--until
 autodiag diagnose instance -t prod01 --live                      # whole RAC, all nodes
+autodiag diagnose performance -t prod01 --instance-id 1 --sample-seconds 10
 ```
 
 The collectors are deterministic and record every item as evidence in a case. The model
@@ -98,6 +99,7 @@ explanation hints.
 | Command | What it does |
 |---|---|
 | `autodiag targets list` | List the configured targets (name, kind, platform, version, nodes, SQL*Net). |
+| `autodiag targets discover HOST [--dry-run] [--json]` | Discover running local DB/ASM/CRS processes through passwordless SSH and `sudo -n`; add ADR targets without replacing existing names. Requires trusted SSH host key and remote Python 3. |
 | `autodiag targets show NAME` | Nodes, SSH aliases, ADR base and homes, allowed roots for one target. |
 | `autodiag targets remove NAME [--yes] [--json]` | Remove an inventory entry with confirmation (skip with `--yes`), retaining an inventory backup and case history. Restart running services to reload their inventory. |
 
@@ -131,9 +133,30 @@ explanation hints.
 | `autodiag diagnose problem -t TARGET (-k KEY \| --incident N) [--max-incidents 5] [--window-minutes 30]` | All incidents of the problem, parsed traces (error, first application frame, SQL, PL/SQL, stack), stack consistency and newest-vs-oldest diff, alert-log entries around the incidents with noise removed, knowledge base, version and patches, ASH around the incident. Then the assessment. |
 | `autodiag diagnose alert -t TARGET [--hours 24 \| --since ISO --until ISO]` | Every node's alert log in the window: entries classified by rules, noise counted not shown, duplicates folded, bursts vs the previous window, lifecycle events, rate change, ADR problems in the period, cross-node correlation on RAC, knowledge base per signature. Then the assessment. |
 | `autodiag diagnose instance -t TARGET [--days 7] [--hours 24] [--live/--no-live]` | The alert sweep plus ADR problems of the last days and, with live checks, the current state over SQL*Net: instances (GV$INSTANCE), PDB open modes, blocked sessions (all instances on RAC), top waits, ASH last hour, RAC global-cache waits, Exadata cell waits. Default: live when the target has SQL*Net. |
+| `autodiag diagnose performance -t TARGET [--instance-id 0] [--sample-seconds 5]` | Sample per-instance DB time, DB CPU, non-idle waits and throughput; collect current sessions/blockers and separately labelled cursor-lifetime top SQL. Requires read-only SQL*Net; uses no ASH/AWR. |
 
 Common options: `--case ID|new`, `--no-assess`, `--model NAME`, `--json`, `--dossier`,
 `--markdown FILE`.
+
+For performance, `--instance-id` is the numeric `GV$INSTANCE.INST_ID`, not a SID;
+`0` samples all instances. `--sample-seconds` accepts 1–60 seconds and defaults to 5.
+The configured `llm_provider` selects Ollama or the OpenAI-compatible endpoint.
+`--no-assess --dossier` shows collected observations without an LLM assessment.
+
+```bash
+autodiag diagnose performance -t prod01 --instance-id 1 --sample-seconds 10 --case new
+autodiag diagnose performance -t prod01 --no-assess --dossier
+autodiag diagnose performance -t prod01 --json
+autodiag diagnose performance -t prod01 --markdown performance.md
+```
+
+Configure a CDB-root read-only SQL connection and the [performance view grants](sql-user.md#performance-grants).
+Newly observed counters are omitted from rates and reported as informational
+`stats.new_counters`, not collection errors. Counter resets and instance restarts
+invalidate affected deltas and are reported separately; collection errors
+remain visible in the dossier. Top SQL is cumulative since cursor load and does not
+by itself prove the cause of a current slowdown. This command is for current
+instance performance; paired 10046 traces remain the workflow for SQL regressions.
 
 On a terminal the diagnosis is coloured (severity, verified proofs, sections) and a
 progress line goes to stderr while evidence is collected; piped output is plain text.

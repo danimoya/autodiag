@@ -7,8 +7,10 @@ how to run it.
 
 ## What AutoDiag never does
 
-- It never runs a statement or command that changes a database, an instance or a host:
+- Diagnostic queries never change database data or instance configuration:
   no DDL, DML, `ALTER SYSTEM`, kills, restarts, log deletion or patching.
+  Explicit IPS/AHF collection requests do create diagnostic packages/files remotely;
+  discovery saves local inventory and backups. These are not zero-write operations.
 - It never executes free-form shell commands or free-form SQL, from any interface, on
   any node: not from the CLI, not from the web UI, not from an agent.
 - Knowledge-base entries carry My Oracle Support *search strings*,
@@ -29,18 +31,36 @@ the agent can do to a database is therefore one of the tools below.
 
 ## SSH: a closed allowlist
 
-`src/autodiag/transport/allowlist.py` is the complete set of commands AutoDiag can run
-on a database node. Each has a fixed argument vector, typed and validated parameters
+`src/autodiag/transport/allowlist.py` defines the diagnostic transport commands AutoDiag
+can run on a database node. Each has a fixed argument vector, typed and validated parameters
 (integers, ADR home names, problem keys, choices, fixed-string patterns), a timeout and an
 output cap. Paths are accepted only under the target's allowed roots: `<adr_base>/diag`,
 the configured `extra_roots` (AHF, OSWatcher) and `ips_dest`, with `..` rejected.
 Connections use `BatchMode=yes` (no password prompts) as the configured user, normally
-`oracle`, so nothing runs with more privilege than the database owner already has.
+`oracle`, or a configured `sudo -n -u OWNER` (normally `oracle` or `grid`). Per-node
+ADR bases determine the transport's file roots. Privileges depend on that configured
+OS account and sudo policy; do not configure root for routine collection.
+
+### Operator-only discovery exception
+
+`autodiag targets discover HOST` is an explicit CLI operation, not an MCP/REST tool.
+It sends a fixed read-only Python probe over SSH and runs `sudo -n -- python3 -`
+as root to inspect local process metadata. Oracle utilities then run as their
+installation/process owner; DB/ASM ADR location queries use local OS-authenticated
+SYSDBA/SYSASM sessions. This probe is separate from the diagnostic command allowlist.
+Granting passwordless sudo for Python is broad authority, not a sandbox: only trusted
+operators should invoke it. The probe does not grant privileges or reconfigure hosts.
+It refuses to execute discovered Oracle utilities as root, or to let a non-root
+process select a different OS owner through installation metadata. It still trusts
+local process/installation metadata; do not treat discoveries from a
+compromised or untrusted host as authenticated diagnostic evidence.
 
 | Command | Purpose |
 |---|---|
 | `hostname`, `uptime` | node identity and load |
 | `adrci_show_homes` | ADR homes |
+| `crsctl_check_has` | Read local Oracle High Availability Services status |
+| `crsctl_resources` | Read resource target/current states; performs no start/stop/change |
 | `adrci_show_problem`, `adrci_show_problem_by_key` | ADR problems (last N days, or one key) |
 | `adrci_show_incident`, `adrci_show_incident_by_id` | incidents of a problem, one incident in detail |
 | `adrci_show_alert_tail` | last N alert-log lines through adrci |

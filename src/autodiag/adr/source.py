@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from hashlib import sha256
 from pathlib import Path
@@ -17,6 +18,7 @@ from autodiag.adr.adrci import (
 )
 from autodiag.alertlog.models import AlertRecord
 from autodiag.alertlog.text import parse_alert_text
+from autodiag.alertlog.xml import parse_alert_xml
 from autodiag.core.models import Node, Target
 from autodiag.transport.ssh import SshTransport
 
@@ -76,34 +78,65 @@ class AdrSource:
         self.target = target
         self._factory = transport_factory or (
             lambda node: SshTransport(
-                node, target.allowed_roots, ssh_config=ssh_config, connect_timeout=connect_timeout
+                node,
+                target.allowed_roots_for(node),
+                ssh_config=ssh_config,
+                connect_timeout=connect_timeout,
             )
         )
         self._transports: dict[str, object] = {}
 
     # -- plumbing --------------------------------------------------------------------
     def transport_for(self, node: Node):
-        key = node.ssh_target
+        configured = node.model_copy(update={"adr_base": node.adr_base or self.target.adr_base})
+        key = configured.model_dump_json()
         if key not in self._transports:
-            self._transports[key] = self._factory(node)
+            self._transports[key] = self._factory(configured)
         return self._transports[key]
 
     def _run(self, node: Node, name: str, params: dict) -> str:
         res = self.transport_for(node).run(name, params)
+        if (
+            name == "grep_file"
+            and res.returncode == 1
+            and not res.timed_out
+            and not res.stderr.strip()
+        ):
+            return ""  # grep distinguishes no matches (1) from execution errors (2).
         if not res.ok:
             raise AdrSourceError(
                 f"{name} on {node.host} failed (rc={res.returncode}): {res.stderr.strip()[:300]}"
             )
+        # ADRCI can print a failure but still exit zero (e.g. missing zip).
+        if name.startswith("adrci_"):
+            # Incident and alert payloads can themselves contain diagnostic codes.
+            payload_commands = {
+                "adrci_show_incident",
+                "adrci_show_incident_by_id",
+                "adrci_show_alert_tail",
+            }
+            diagnostic = res.stderr
+            if name not in payload_commands:
+                diagnostic += "\n" + res.stdout
+            error = re.search(r"^\s*(?:DIA|DDE)-\d+:.*", diagnostic, re.MULTILINE)
+            if error:
+                raise AdrSourceError(f"{name} on {node.host}: {error.group().strip()[:300]}")
         return res.stdout
 
     def _refs(self) -> list[_Ref]:
         refs: list[_Ref] = []
         for node in self.target.nodes:
             homes = self.target.adr_homes or self.list_homes(node)
+            if self.target.component == "crs" and len(self.target.nodes) > 1:
+                # SSH aliases and FQDNs need not match the ADR hostname. Ask each
+                # node which configured homes it actually owns instead.
+                local_homes = set(self.list_homes(node))
+                homes = [home for home in homes if home in local_homes]
             for home in homes:
                 if (
                     node.instance
-                    and not home.endswith("/" + node.instance)
+                    and self.target.component in {"rdbms", "asm"}
+                    and home.rsplit("/", 1)[-1].casefold() != node.instance.casefold()
                     and len(self.target.nodes) > 1
                 ):
                     continue  # on RAC each node owns its own instance home
@@ -142,7 +175,7 @@ class AdrSource:
     # -- queries ---------------------------------------------------------------------
     def list_homes(self, node: Node) -> list[str]:
         homes = parse_show_homes(self._run(node, "adrci_show_homes", {}))
-        return [h for h in homes if h.startswith("diag/rdbms/")]
+        return [h for h in homes if h.startswith(f"diag/{self.target.component}/")]
 
     def list_problems(self, days: int = 7) -> list[ProblemRow]:
         out: list[ProblemRow] = []
@@ -231,12 +264,14 @@ class AdrSource:
 
     # -- files -----------------------------------------------------------------------
     def alert_log_path(self, node: Node, adr_home: str) -> str:
-        base = (self.target.adr_base or "").rstrip("/")
+        base = (node.adr_base or self.target.adr_base or "").rstrip("/")
+        if adr_home.startswith("diag/crs/"):
+            return f"{base}/{adr_home}/trace/alert.log"
         instance = node.instance or adr_home.rsplit("/", 1)[-1]
         return f"{base}/{adr_home}/trace/alert_{instance}.log"
 
     def alert_xml_path(self, node: Node, adr_home: str) -> str:
-        base = (self.target.adr_base or "").rstrip("/")
+        base = (node.adr_base or self.target.adr_base or "").rstrip("/")
         return f"{base}/{adr_home}/alert/log.xml"
 
     def fetch_file(
@@ -254,12 +289,14 @@ class AdrSource:
     def read_alert(
         self, node: Node, home: str, cache: Path, *, max_bytes: int = 64 * 1024 * 1024
     ) -> AlertRead:
-        path = self.alert_log_path(node, home)
+        is_crs = home.startswith("diag/crs/")
+        path = self.alert_xml_path(node, home) if is_crs else self.alert_log_path(node, home)
         dest = self.cache_path(cache, node, path)
         res = self.transport_for(node).fetch_tail(path, dest, max_bytes=max_bytes)
         if not res.ok:
             raise AdrSourceError(f"alert tail fetch failed: {res.stderr[:200]}")
-        records = parse_alert_text(dest.read_text(errors="replace"))
+        text = dest.read_text(errors="replace")
+        records = parse_alert_xml(text) if is_crs else parse_alert_text(text)
         if res.truncated:
             records = [r for r in records if r.ts is not None]
         return AlertRead(records=records, truncated=res.truncated, limit_bytes=max_bytes)

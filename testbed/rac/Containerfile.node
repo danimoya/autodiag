@@ -1,0 +1,8 @@
+FROM container-registry.oracle.com/database/rac@sha256:521f074979e508df4bfcde85d5424aa8d2df009ca23c03bfdf920d250d540a20
+# ADRCI IPS invokes zip externally; it is absent from the published image.
+RUN dnf install -y zip && dnf clean all
+# Accept single-line Base64 secrets too; OpenSSL otherwise decodes them as empty.
+RUN sed -i 's/openssl base64 -d -in/openssl base64 -d -A -in/' /opt/scripts/startup/scripts/oracommon.py
+# The published initsh writes unquoted exports (CRS_NODES contains semicolons).
+COPY initsh /usr/bin/autodiag-rac-init
+ENTRYPOINT ["/bin/bash", "/usr/bin/autodiag-rac-init"]

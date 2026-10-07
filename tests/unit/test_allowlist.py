@@ -43,6 +43,14 @@ def test_missing_parameter_is_rejected() -> None:
         build_command("adrci_show_problem", {"adr_home": "diag/rdbms/free/FREE"})
 
 
+def test_asm_plus_names_are_valid_but_not_command_injection() -> None:
+    argv = build_command("adrci_show_problem", {"adr_home": "diag/asm/+asm/+ASM1", "days": 1})
+    assert "set home diag/asm/+asm/+ASM1;" in argv[1]
+    for home in ("diag/asm/+asm/+ASM1;host id", "diag/asm/+asm/$(id)", "diag/asm/../+ASM1"):
+        with pytest.raises(AllowlistError):
+            build_command("adrci_show_problem", {"adr_home": home, "days": 1})
+
+
 def test_unexpected_parameter_is_rejected() -> None:
     with pytest.raises(AllowlistError, match="unexpected parameter"):
         build_command("hostname", {"extra": "x"})

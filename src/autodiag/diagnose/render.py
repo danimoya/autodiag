@@ -107,7 +107,7 @@ def diagnosis_markdown(d: Diagnosis) -> str:
             md.append(f"  - next: {n}")
     if not a.concerns:
         md.append("- none proven")
-    md += ["", "## Dismissed"] + [f"- {x.what}: {x.reason}" for x in a.dismissed] or ["- none"]
+    md += ["", "## Dismissed"] + ([f"- {x.what}: {x.reason}" for x in a.dismissed] or ["- none"])
     md += ["", "## Suggested actions"] + ([f"- {x}" for x in a.actions] or ["- none"])
     md += ["", "## Open questions"] + ([f"- {x}" for x in a.open_questions] or ["- none"])
     md += [

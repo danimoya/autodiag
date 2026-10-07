@@ -164,6 +164,8 @@ def create_app(ctx: AutoDiagContext) -> FastAPI:
         hours: float = Form(24.0),
         days: int = Form(7),
         live: str = Form("auto"),
+        instance_id: int = Form(0, ge=0),
+        sample_seconds: float = Form(5.0, ge=1, le=60),
     ) -> RedirectResponse:
         from autodiag.diagnose.engine import diagnose
         from autodiag.diagnose.render import diagnosis_markdown
@@ -175,6 +177,8 @@ def create_app(ctx: AutoDiagContext) -> FastAPI:
             kw["hours"] = hours
         elif mode == "instance":
             kw.update(days=days, hours=hours, live=None if live == "auto" else live == "yes")
+        elif mode == "performance":
+            kw.update(instance_id=instance_id, sample_seconds=sample_seconds)
         else:
             raise HTTPException(422, f"unknown mode {mode!r}")
         try:

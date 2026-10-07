@@ -9,6 +9,13 @@ shows the pages against disposable 23ai and 26ai testbeds.
 OpenAPI description at `/api/openapi.json` with Swagger at `/api/docs`, and the MCP
 endpoint at `/mcp`. The pages need no JavaScript; every action is a form.
 
+## Performance diagnosis
+
+Database target pages with SQL*Net configured include a performance diagnosis form:
+choose a GV$ instance ID (0 for all) and a 1–60 second sample. It creates a report
+using the configured Ollama or OpenAI-compatible assessor. REST callers can use
+`/api/v1/tools/diagnose_performance` with `assess: true` for the same assessment.
+
 ## Authentication
 
 Set `mcp_token` (or `AUTODIAG_MCP_TOKEN`) to require `Authorization: Bearer <token>` on

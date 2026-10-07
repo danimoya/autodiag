@@ -115,3 +115,16 @@ def test_diff_commands() -> None:
     r = runner.invoke(app, ["diff", "alertrate", a, a, "--split", "2026-09-22T12:00:00+00:00"])
     assert r.exit_code == 0, r.output
     assert "ORA-00060" in r.output
+
+
+def test_cli_grep_no_match(monkeypatch):
+    from autodiag.transport.ssh import CommandResult
+
+    class Transport:
+        def run(self, name, params):
+            return CommandResult(name=name, argv=[], returncode=1, stdout="")
+
+    monkeypatch.setattr(common, "transport_factory", lambda s, t: lambda n: Transport())
+    result = runner.invoke(app, ["alert", "grep", "--target", "testbed", "missing"])
+    assert result.exit_code == 0, result.output
+    assert "(no match)" in result.output

@@ -88,6 +88,7 @@ class Collector:
             mode=mode,
             target=self.t.name,
             target_kind=self.t.kind.value,
+            component=self.t.component,
             platform=self.t.platform.value,
             oracle_version=self.t.oracle_version,
             scope=scope,
@@ -844,6 +845,25 @@ def collect_instance(
     d = c.new_dossier("instance", {"days": days, "hours": hours, "live": use_live})
     c.problems_into(d, days=days)
     _alert_sweep(c, d, since=c.now - timedelta(hours=hours), until=c.now)
+    if target.component == "crs":
+        for node in target.nodes:
+            for command in ("crsctl_check_has", "crsctl_resources"):
+                try:
+                    result = c.src.transport_for(node).run(command, {})
+                    if not result.ok:
+                        d.errors.append(f"{command} on {node.host}: exit {result.returncode}")
+                    c.add(
+                        d,
+                        kind="cluster_status",
+                        severity=Severity.INFO,
+                        title=f"{command} on {node.host}",
+                        node=node.host,
+                        text=result.stdout[:3500] or "No status output collected.",
+                        refs={"command": command, "returncode": result.returncode},
+                    )
+                except Exception as exc:
+                    d.errors.append(f"{command} on {node.host}: {type(exc).__name__}")
+        return d
     if use_live:
         if c.runner() is None:
             d.errors.append("live checks requested but the target has no SQL*Net configuration")

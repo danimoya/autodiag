@@ -1,0 +1,2 @@
+# Disposable RAC lab only: needed to test explicit-host SSH/sudo discovery.
+autodiag ALL=(ALL) NOPASSWD: ALL

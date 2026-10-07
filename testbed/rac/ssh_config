@@ -1,0 +1,13 @@
+Host autodiag-rac1
+    HostName 10.203.0.11
+
+Host autodiag-rac2
+    HostName 10.203.0.12
+
+Host autodiag-rac1 autodiag-rac2
+    User autodiag
+    Port 2222
+    IdentityFile ~/.config/autodiag/rac26ai/id_ed25519
+    IdentitiesOnly yes
+    UserKnownHostsFile ~/.config/autodiag/rac26ai/known_hosts
+    StrictHostKeyChecking yes

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
@@ -39,6 +40,13 @@ class OpenAICompatibleClient:
         format: dict[str, Any] | None = None,
         temperature: float = 0.1,
     ) -> tuple[dict, ChatResult]:
+        messages = [dict(message) for message in messages]
+        if format is not None and self.response_format != "json_schema":
+            instruction = "\nReturn one JSON object matching this schema:\n" + json.dumps(format)
+            if messages and messages[0]["role"] == "system":
+                messages[0]["content"] += instruction
+            else:
+                messages.insert(0, {"role": "system", "content": instruction.strip()})
         body: dict[str, Any] = {
             "model": model,
             "messages": messages,

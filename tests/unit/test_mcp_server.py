@@ -313,3 +313,57 @@ async def test_diagnose_tools_return_dossier_and_rules_assessment(server) -> Non
     assert any(i["kind"] == "correlation" for i in r["items"])
     r = await call(server, "diagnose_problem", target="testbed")
     assert r["error_type"] == "AdrSourceError"
+
+
+async def test_ips_success_records_artifact(ctx, tmp_path):
+    import asyncio
+
+    from autodiag.transport.ssh import CommandResult
+
+    class Transport:
+        def run(self, name, params):
+            outputs = {
+                "adrci_ips_create_incident": "Created package 7 based on incident id 123",
+                "adrci_ips_generate": "Generated package 7 in file /tmp/review.zip",
+            }
+            return CommandResult(name=name, argv=[], returncode=0, stdout=outputs[name])
+
+        def fetch(self, path, dest, **kwargs):
+            import zipfile
+
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(dest, "w") as archive:
+                archive.writestr("trace.txt", "validation fixture")
+            return CommandResult(name="cat_file", argv=[], returncode=0, stdout=str(dest))
+
+    ctx.transport_factory = lambda t: lambda n: Transport()
+    server = build_server(ctx)
+    case = ctx.store.open_case("testbed", "IPS validation")
+    result = await call(
+        server, "create_ips_package", target="testbed", incident_id=123, case_id=case.id
+    )
+    job_id = result["job"]["id"]
+    for _ in range(200):
+        job = (await call(server, "job_status", job_id=job_id))["job"]
+        if job["status"] in {"done", "failed"}:
+            break
+        await asyncio.sleep(0.01)
+    assert job["status"] == "done", job
+    assert job["result"]["package_id"] == 7
+    artifact = ctx.store.get_artifact(job["result"]["artifact_id"])
+    assert artifact.case_id == case.id
+
+
+async def test_mcp_grep_empty_result(server, monkeypatch, ctx):
+    from autodiag.transport.ssh import CommandResult
+
+    src = ctx.source(ctx.target("testbed"))
+    for node, _ in src.refs():
+        transport = src.transport_for(node)
+        monkeypatch.setattr(
+            transport,
+            "run",
+            lambda name, params: CommandResult(name=name, argv=[], returncode=1, stdout=""),
+        )
+    result = await call(server, "alert_log_grep", target="testbed", pattern="missing")
+    assert "error" not in result, result

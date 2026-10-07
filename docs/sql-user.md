@@ -49,6 +49,15 @@ Sites that do not allow common users can create a local `AUTODIAG` user inside e
 with the same grants (without `CONTAINER=ALL`). ADR and instance-level views remain
 readable from a PDB, but the account then sees only that PDB's sessions and history.
 
+## Performance grants
+
+Performance diagnosis uses `performance_counters`, `performance_sessions`, and
+`performance_sql`. The diagnostic account needs SELECT access to `GV$INSTANCE`,
+`GV$SYS_TIME_MODEL`, `GV$SYSTEM_EVENT`, `GV$SYSSTAT`, `GV$SESSION`, and `GV$SQLSTATS`
+in the CDB root. These queries do not use ASH/AWR. For accounts without catalog-role
+access, have the DBA grant SELECT on the corresponding `SYS.GV_$...` views.
+Discovery does not create accounts or grant privileges.
+
 ## Password handling
 
 AutoDiag never stores passwords in its database or configuration files. Each target

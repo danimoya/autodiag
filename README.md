@@ -11,13 +11,15 @@
 [GUI screenshots (static gallery)](docs/screenshots/README.md) ·
 [Bootstrap the GUI: local setup, systemd, NPM, pitfalls and recommendations](docs/gui-bootstrap.md)
 
-Oracle Database diagnostic assistant for 19c / 23ai on Exadata Cloud@Customer and any
-other Oracle estate. It reads what a DBA would read by hand, ADR problems and incidents,
+Oracle Database diagnostic assistant, runtime-tested on single-instance 23ai/26ai
+and a two-node 26ai RAC lab (see [validation boundaries](docs/testbed.md)).
+19c, Oracle Restart and Exadata Cloud@Customer remain unvalidated.
+It reads what a DBA would read by hand, ADR problems and incidents,
 multi-megabyte trace files, alert logs, ASH and instance views, and turns it into a short,
 evidence-backed assessment of what is wrong and what to do next.
 
 The centre is an **automated diagnosis**. Deterministic collectors gather a bounded dossier
-of evidence; a local LLM (Ollama) decides what matters and what is noise; and every concern
+of evidence; an LLM through Ollama or an OpenAI-compatible endpoint assesses it; every concern
 it reports must be proven by quotes that AutoDiag verifies against the dossier before the
 DBA sees them. Without a model the same dossier is ranked by rules and labelled as such.
 
@@ -25,11 +27,19 @@ DBA sees them. Without a model the same dossier is ranked by rules and labelled 
 autodiag diagnose problem  -t prod01 -k 'ORA 600 [kkslgop1]'   # one ADR problem
 autodiag diagnose alert    -t prod01 --hours 24                 # the alert log(s)
 autodiag diagnose instance -t prod01 --live                     # instance / whole RAC
+autodiag diagnose performance -t prod01 --instance-id 1 --sample-seconds 10 --case new
 ```
 
 The same core is exposed three ways from one process: an **MCP server** for AI agents
 (OpenCode, Claude Code, any MCP client) with a bundled OpenCode skill, a **web UI + REST
 API** on `127.0.0.1:8790`, and the **CLI** for scripts and cron with no LLM at all.
+
+`diagnose performance` requires the target's read-only CDB-root SQL connection. It
+samples current per-instance DB time/CPU, waits and throughput, then checks sessions,
+blocking and top SQL; it does not require ASH/AWR. See the [command reference](docs/cli.md#autodiag-diagnose),
+[required grants](docs/sql-user.md#performance-grants), and
+[LLM configuration](docs/architecture.md#openai-compatible-assessment-endpoints).
+Use `--no-assess --dossier` to inspect the observations without an LLM.
 
 ## Quick guide
 
@@ -41,7 +51,7 @@ API** on `127.0.0.1:8790`, and the **CLI** for scripts and cron with no LLM at a
 2. **Describe the databases** in `~/.config/autodiag/targets.yaml` (nodes with SSH
    aliases, ADR base and homes, optional SQL*Net DSN with a read-only user; see
    `tests/fixtures/config/targets.yaml` for the shape) and the settings in
-   `~/.config/autodiag/config.toml` (Ollama URL and model, listen address, caps). Passwords
+   `~/.config/autodiag/config.toml` (LLM provider, URL and model, listen address, caps). Passwords
    and tokens go in `~/.config/autodiag/autodiag.env` (mode 600), referenced by name.
 3. **Give access**: passwordless SSH as the `oracle` user to every node (an `ssh_config`
    file can be pointed to with `ssh_config`), and the read-only diagnostic database user
@@ -91,6 +101,7 @@ try all of this without touching production (`docs/testbed.md`).
 | A new ORA-600 or ORA-7445 appeared overnight | `diagnose problem -k '<key>'`, then `report render --kind sr` and `create_ips_package` |
 | "Something was wrong between 02:00 and 03:00" | `diagnose alert --since ... --until ...`, `compare_alert_rates` against the day before |
 | Health check of an instance or a whole RAC before a change window | `diagnose instance --live` |
+| An instance is slow now: CPU demand, waits, throughput or blocking | `diagnose performance -t TARGET --instance-id 1 --sample-seconds 10 --case new` |
 | A batch job became slow after a release | `sql_trace_profile` on both 10046 traces, `compare_sql_profiles`, `sql_plan_history` |
 | Deadlocks or a hang reported by the application | `parse_trace` on the deadlock or hanganalyze trace, `blocking_tree_now` |
 | Is this problem key one bug or several? | `stack_frequency`, `compare_call_stacks` newest vs oldest |

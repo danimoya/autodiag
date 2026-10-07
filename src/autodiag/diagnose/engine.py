@@ -11,11 +11,12 @@ import httpx
 from autodiag.core.settings import Settings
 from autodiag.diagnose.collect import collect_alert, collect_instance, collect_problem
 from autodiag.diagnose.models import Assessment, Diagnosis, Dossier
+from autodiag.diagnose.performance import collect_performance
 from autodiag.llm.assess import OllamaAssessor, rules_assessment
 from autodiag.llm.ollama import OllamaClient, OllamaError
 from autodiag.llm.openai_compatible import OpenAICompatibleClient
 
-MODES = ("problem", "alert", "instance")
+MODES = ("problem", "alert", "instance", "performance")
 Assessor = Callable[[Dossier], Assessment]
 
 
@@ -52,6 +53,8 @@ def default_assessor(
 
 def _scope_title(mode: str, dossier: Dossier) -> str:
     s = dossier.scope
+    if mode == "performance":
+        return f"diagnose performance: instance {s.get('instance_id', 0)}"
     if mode == "problem":
         return f"diagnose problem: {s.get('problem_key')}"
     if mode == "alert":
@@ -82,6 +85,8 @@ def diagnose(
     model: str | None = None,
     max_incidents: int = 5,
     window_minutes: int = 30,
+    instance_id: int = 0,
+    sample_seconds: float = 5.0,
 ) -> Diagnosis:
     if mode not in MODES:
         raise ValueError(f"mode must be one of {MODES}")
@@ -95,7 +100,11 @@ def diagnose(
         )
     else:
         case = ctx.scratch_case(t)
-    if mode == "problem":
+    if mode == "performance":
+        dossier = collect_performance(
+            ctx, t, case_id=case.id, instance_id=instance_id, sample_seconds=sample_seconds
+        )
+    elif mode == "problem":
         dossier = collect_problem(
             ctx,
             t,

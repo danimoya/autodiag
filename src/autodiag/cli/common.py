@@ -39,7 +39,7 @@ def transport_factory(s: Settings, t: Target) -> Callable[[Node], object]:
     """Builds the per-node transport; tests replace this to avoid the network."""
     return lambda node: SshTransport(
         node,
-        t.allowed_roots,
+        t.allowed_roots_for(node),
         ssh_config=s.ssh_config,
         connect_timeout=s.ssh_connect_timeout,
         default_timeout=s.ssh_command_timeout,

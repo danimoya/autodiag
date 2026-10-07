@@ -26,7 +26,7 @@ class AllowlistError(ValueError):
 
 Validator = Callable[[str, Any, Sequence[str]], str]
 
-_ADR_HOME_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./-]*$")
+_ADR_HOME_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_+./-]*$")
 _PROBLEM_KEY_RE = re.compile(r"^[A-Za-z0-9 _\[\]\-.:#/()*+,]+$")
 _IDENT_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _FILE_GLOB_RE = re.compile(r"^[A-Za-z0-9_.*%-]+$")
@@ -113,6 +113,12 @@ def _adrci(script: str) -> tuple[str, ...]:
 
 
 ALLOWLIST: dict[str, CommandSpec] = {
+    "crsctl_check_has": CommandSpec(
+        ("crsctl", "check", "has"), description="Read local High Availability Services status"
+    ),
+    "crsctl_resources": CommandSpec(
+        ("crsctl", "status", "resource", "-t"), description="Read Clusterware resource states"
+    ),
     "hostname": CommandSpec(("hostname",), description="Node host name", timeout=10),
     "uptime": CommandSpec(("uptime",), description="Node uptime and load", timeout=10),
     "adrci_show_homes": CommandSpec(
